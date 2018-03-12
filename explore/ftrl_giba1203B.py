@@ -24,6 +24,8 @@ from math import exp, log, sqrt
 data_path = "/home/darragh/tdata/data/"
 train = data_path + 'trainvalsmall.csv'  #'trainval.csv'   # path to training file
 test = data_path +  'testvalsmall.csv'   #'testval.csv'    # path to testing file
+trainlead = data_path + '../features/leadtrnsmall.csv'
+testlead =  data_path + '../features/leadtstsmall.csv'
 submission = data_path + '../sub/sub_probasmall.csv'  # path of to be outputted submission file
 
 # B, model
@@ -56,8 +58,6 @@ def bucket(val):
 bucket(597859)
     
 
-trainlead = data_path + '../features/leadtrnsmall.csv'
-testlead =  data_path + '../features/leadtstsmall.csv'
 start_time = time.time()
 
 def get_leads(path):
