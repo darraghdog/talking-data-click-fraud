@@ -1,0 +1,5 @@
+*.bin
+*.csv
+*.zip
+*output*
+*model*
