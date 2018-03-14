@@ -4,7 +4,7 @@ from sklearn import metrics
 data_path = "/home/darragh/tdata/data/"
 yact  = pd.read_csv(data_path + 'yvalsmall.csv')
 ypred = pd.read_csv(data_path + '../sub/sub_probasmall.csv')
-ypred = pd.read_csv(data_path + '../explore/sub_probasmall.csv')
+#ypred = pd.read_csv(data_path + '../explore/sub_probasmall.csv')
 yact.columns = ['id', 'is_attributed']
 
 print(ypred.shape)
