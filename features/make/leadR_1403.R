@@ -45,8 +45,8 @@ getLag(tstdf, cols_, fname, path)
 
   
 # Write out the <ip, device, os, channel> level
-trndf = fread(paste0(path, 'train.csv'))
-fname = "lead_lag_trn_ip_device_os_channel.gz"
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channelvalsmall.gz"
 cols_ = c("ip", "device", "os", "channel")
 getLag(trndf, cols_, fname, path)
 
