@@ -8,6 +8,8 @@ library(Hmisc)
 
 
 getLag = function(df, cols_, fname, path){
+  df$click_sec = as.numeric(fasttime::fastPOSIXct(df$click_time))
+  df$click_time = NULL
   df = df[,c(cols_, "click_sec"), with = F]
   df[, index := 1:nrow(df)]
   setorderv(df, c(cols_, "click_sec"))
@@ -26,30 +28,32 @@ getLag = function(df, cols_, fname, path){
             row.names = F, quote = F)
 }
 
-# Write out the 
+
 path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
-trndf = fread(paste0(path, 'train.csv'))
-gc();gc();gc()
-trndf$click_sec = as.numeric(fasttime::fastPOSIXct(trndf$click_time))
-trndf$click_time = NULL
 
-fname = "lead_lag_trn_ip_device_os_tmp.gz"
+# Write out the <ip, device, os> level
+trndf = fread(paste0(path, 'train.csv'))
+fname = "lead_lag_trn_ip_device_os.gz"
 cols_ = c("ip", "device", "os")
 getLag(trndf, cols_, fname, path)
-  
-  
-# Write out the 
-path = '~/tdata/data/'
-path = '/Users/dhanley2/Documents/tdata/data/'
-trndf = fread(paste0(path, 'train.csv'))
-gc();gc();gc()
-trndf$click_sec = as.numeric(fasttime::fastPOSIXct(trndf$click_time))
-trndf$click_time = NULL
 
+tstdf = fread(paste0(path, 'test.csv'))
+fname = "lead_lag_tst_ip_device_os.gz"
+cols_ = c("ip", "device", "os")
+getLag(tstdf, cols_, fname, path)
+
+  
+# Write out the <ip, device, os, channel> level
+trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os_channel.gz"
 cols_ = c("ip", "device", "os", "channel")
 getLag(trndf, cols_, fname, path)
+
+tstdf = fread(paste0(path, 'test.csv'))
+fname = "lead_lag_tst_ip_device_os_channel.gz"
+cols_ = c("ip", "device", "os", "channel")
+getLag(tstdf, cols_, fname, path)
 
 
 
