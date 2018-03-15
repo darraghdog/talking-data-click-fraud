@@ -32,6 +32,17 @@ getLag = function(df, cols_, fname, path){
 path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
+# Write out the <ip, device, os, channel, app> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channel_app_valsmall.gz"
+cols_ = c("ip", "device", "os", "app", "channel")
+getLag(trndf, cols_, fname, path)
+
+tstdf = fread(paste0(path, 'test.csv'))
+fname = "lead_lag_tst_ip_device_os.gz"
+cols_ = c("ip", "device", "os")
+getLag(tstdf, cols_, fname, path)
+
 # Write out the <ip, device, os> level
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os.gz"
