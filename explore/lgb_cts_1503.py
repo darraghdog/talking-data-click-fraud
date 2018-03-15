@@ -75,15 +75,15 @@ dtypes = {
         }
 
 print('load train...')
-train_df = pd.read_csv(path+"trainvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+train_df = pd.read_csv(path+"train.csv", nrows=600000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('load test...')
-test_df = pd.read_csv(path+"testvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('load features...')
-feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channelvalsmall.gz', compression = 'gzip')
-feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channelvalsmall.gz', compression = 'gzip')
-feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_osvalsmall.gz', compression = 'gzip')
-feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_osvalsmall.gz', compression = 'gzip')
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=600000)
+feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel.gz', compression = 'gzip')
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=600000)
+feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compression = 'gzip')
 
 print(train_df.shape)
 print(feattrnchl.shape)
@@ -144,8 +144,8 @@ for col in train_df.columns:
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
-val_df = train_df[(len_train-4500000):len_train]
-train_df = train_df[:(len_train-4500000)]
+val_df = train_df[(len_train-5700000):len_train]
+train_df = train_df[:(len_train-5700000)]
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
