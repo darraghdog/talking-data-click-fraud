@@ -75,14 +75,14 @@ dtypes = {
         }
 
 print('load train...')
-train_df = pd.read_csv(path+"train.csv", nrows=600000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+train_df = pd.read_csv(path+"train.csv", nrows=8000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('load test...')
 test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('load features...')
-feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=600000)
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=8000000)
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel.gz', compression = 'gzip')
-feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=600000)
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=8000000)
 feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compression = 'gzip')
 
 print(train_df.shape)
@@ -144,8 +144,8 @@ for col in train_df.columns:
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
-val_df = train_df[(len_train-5700000):len_train]
-train_df = train_df[:(len_train-5700000)]
+val_df = train_df[(len_train-750000):len_train]
+train_df = train_df[:(len_train-750000)]
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
@@ -195,11 +195,12 @@ gc.collect()
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb1503_val.csv',index=False)
+sub.to_csv(path + '../sub/sub_lgb1503.csv',index=False)
 print("done...")
 print(sub.info())
 
-
+'''
 yact  = pd.read_csv(data_path + 'yvalsmall.csv')
 fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
 print(metrics.auc(fpr, tpr))
+'''
