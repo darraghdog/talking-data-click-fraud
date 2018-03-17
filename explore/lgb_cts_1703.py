@@ -63,6 +63,9 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
+path = '/Users/dhanley2/Documents/tdata/data/'
+trn_load = 80000000
+val_size = 5000000
 
 dtypes = {
         'ip'            : 'uint32',
@@ -75,14 +78,14 @@ dtypes = {
         }
 
 print('load train...')
-train_df = pd.read_csv(path+"train.csv", nrows=8000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+train_df = pd.read_csv(path+"train.csv", nrows=trn_load, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('load test...')
 test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('load features...')
-feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=8000000)
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=trn_load)
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel.gz', compression = 'gzip')
-feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=8000000)
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=trn_load)
 feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compression = 'gzip')
 
 print(train_df.shape)
@@ -91,11 +94,23 @@ print(feattrnchl.shape)
 feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
 feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
 
-train_df = pd.concat([train_df, feattrnchl, feattrnos], axis=1)
-test_df  = pd.concat([test_df , feattstchl, feattstos], axis=1)
+feattrn = pd.concat([feattrnchl, feattrnos], axis=1)
+feattst = pd.concat([feattstchl, feattstos], axis=1)
 del feattrnchl, feattrnos , feattstchl, feattstos
-
 import gc
+gc.collect()
+
+clip_val = 3600*10
+feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
+feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
+
+#feattrn.hist()
+#feattst.hist()
+#feattrn[20000000:].hist()
+
+train_df = pd.concat([train_df, feattrn], axis=1)
+test_df  = pd.concat([test_df , feattst], axis=1)
+
 gc.collect()
 
 len_train = len(train_df)
@@ -144,8 +159,8 @@ for col in train_df.columns:
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
-val_df = train_df[(len_train-750000):len_train]
-train_df = train_df[:(len_train-750000)]
+val_df = train_df[(len_train-val_size):len_train]
+train_df = train_df[:(len_train-val_size)]
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
@@ -195,7 +210,7 @@ gc.collect()
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb1503.csv',index=False)
+sub.to_csv(path + '../sub/sub_lgb1703.csv',index=False)
 print("done...")
 print(sub.info())
 
