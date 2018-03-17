@@ -7,7 +7,7 @@ library(fasttime)
 library(Hmisc)
 
 
-getLag = function(df, cols_, fname, path){
+getLag = function(df, cols_, fname, path, df_out = FALSE){
   df$click_sec = as.numeric(fasttime::fastPOSIXct(df$click_time))
   df$click_time = NULL
   df = df[,c(cols_, "click_sec"), with = F]
@@ -22,10 +22,15 @@ getLag = function(df, cols_, fname, path){
   df[seq_lead==1, click_sec_lead := -1]
   df[seq_lag==1,  click_sec_lag := -1]
   setorderv(df, "index")
-  df[,.(click_sec_lead, click_sec_lag)]
-  write.csv(df[,.(click_sec_lead, click_sec_lag)], 
-            gzfile(paste0(path, fname)), 
-            row.names = F, quote = F)
+  df = df[,.(click_sec_lead, click_sec_lag)]
+  if (df_out){
+    return(df)
+  }else{
+    write.csv(df, 
+              gzfile(paste0(path, fname)), 
+              row.names = F, quote = F)
+  }
+  gc();gc();gc()
 }
 
 
@@ -46,35 +51,58 @@ tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os_channel_app.gz"
 cols_ = c("ip", "device", "os", "app", "channel")
-getLag(tstdf, cols_, fname, path)
+feats = getLag(tstdf, cols_, fname, path, TRUE)
+write.csv(feats[setidx==1], 
+          gzfile(paste0(path, fname)), 
+          row.names = F, quote = F)
 
-tstdf = fread(paste0(path, 'testvalsmall.csv'))
-fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
-cols_ = c("ip", "device", "os", "app", "channel")
-getLag(tstdf, cols_, fname, path)
+#tstdf = fread(paste0(path, 'testvalsmall.csv'))
+#fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
+#cols_ = c("ip", "device", "os", "app", "channel")
+#getLag(tstdf, cols_, fname, path)
 
+##################################################
 # Write out the <ip, device, os> level
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os.gz"
 cols_ = c("ip", "device", "os")
 getLag(trndf, cols_, fname, path)
 
-tstdf = fread(paste0(path, 'test.csv'))
+
+tstdf = fread(paste0(path, 'testfull.csv'))
+setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os.gz"
 cols_ = c("ip", "device", "os")
-getLag(tstdf, cols_, fname, path)
+feats = getLag(tstdf, cols_, fname, path, TRUE)
+write.csv(feats[setidx==1], 
+          gzfile(paste0(path, fname)), 
+          row.names = F, quote = F)
 
-  
+#tstdf = fread(paste0(path, 'testvalsmall.csv'))
+#fname = "lead_lag_tst_ip_device_osvallsmall.gz"
+#cols_ = c("ip", "device", "os")
+#getLag(tstdf, cols_, fname, path)
+
+#################################################
 # Write out the <ip, device, os, channel> level
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os_channel.gz"
 cols_ = c("ip", "device", "os", "channel")
 getLag(trndf, cols_, fname, path)
 
-tstdf = fread(paste0(path, 'test.csv'))
+tstdf = fread(paste0(path, 'testfull.csv'))
+setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os_channel.gz"
 cols_ = c("ip", "device", "os", "channel")
-getLag(tstdf, cols_, fname, path)
+feats = getLag(tstdf, cols_, fname, path, TRUE)
+write.csv(feats[setidx==1], 
+          gzfile(paste0(path, fname)), 
+          row.names = F, quote = F)
+
+#tstdf = fread(paste0(path, 'testvalsmall.csv'))
+#fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
+#cols_ = c("ip", "device", "os", "channel")
+#getLag(tstdf, cols_, fname, path)
 
 ############################################
 ########## Click Rolling Mean ##############
