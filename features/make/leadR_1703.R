@@ -47,6 +47,13 @@ fname = "lead_lag_trn_ip_device_os_channel_app.gz"
 cols_ = c("ip", "device", "os", "app", "channel")
 getLag(trndf, cols_, fname, path)
 
+
+# Write out the <ip, device, os, channel, app> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channel_appvalsmall.gz"
+cols_ = c("ip", "device", "os", "app", "channel")
+getLag(trndf, cols_, fname, path)
+
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os_channel_app.gz"
@@ -56,18 +63,25 @@ write.csv(feats[setidx==1],
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
-#cols_ = c("ip", "device", "os", "app", "channel")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
+cols_ = c("ip", "device", "os", "app", "channel")
+getLag(tstdf, cols_, fname, path)
 
 ##################################################
+
 # Write out the <ip, device, os> level
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os.gz"
 cols_ = c("ip", "device", "os")
 getLag(trndf, cols_, fname, path)
 
+
+# Write out the <ip, device, os> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_osvalsmall.gz"
+cols_ = c("ip", "device", "os")
+getLag(trndf, cols_, fname, path)
 
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
@@ -78,15 +92,21 @@ write.csv(feats[setidx==1],
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_osvallsmall.gz"
-#cols_ = c("ip", "device", "os")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_osvalsmall.gz"
+cols_ = c("ip", "device", "os")
+getLag(tstdf, cols_, fname, path)
 
 #################################################
 # Write out the <ip, device, os, channel> level
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os_channel.gz"
+cols_ = c("ip", "device", "os", "channel")
+getLag(trndf, cols_, fname, path)
+
+# Write out the <ip, device, os, channel> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channelvalsmall.gz"
 cols_ = c("ip", "device", "os", "channel")
 getLag(trndf, cols_, fname, path)
 
@@ -99,10 +119,10 @@ write.csv(feats[setidx==1],
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
-#cols_ = c("ip", "device", "os", "channel")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
+cols_ = c("ip", "device", "os", "channel")
+getLag(tstdf, cols_, fname, path)
 
 ############################################
 ########## Click Rolling Mean ##############
@@ -134,3 +154,6 @@ trndf
 
 table(is.na(trndf$rmeanhr40))
 
+############################################
+################ Lead & Lag ################
+############################################

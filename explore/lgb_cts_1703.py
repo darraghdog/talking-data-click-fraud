@@ -3,6 +3,7 @@ import time
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import lightgbm as lgb
+import gc
 
 def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objective='binary', metrics='auc',
                  feval=None, early_stopping_rounds=20, num_boost_round=3000, verbose_eval=10, categorical_features=None):
@@ -75,14 +76,14 @@ dtypes = {
         }
 
 print('load train...')
-train_df = pd.read_csv(path+"train.csv", nrows=8000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+train_df = pd.read_csv(path+"train.csv", nrows=80000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('load test...')
 test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('load features...')
-feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=8000000)
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows=80000000)
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel.gz', compression = 'gzip')
-feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=8000000)
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows=80000000)
 feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compression = 'gzip')
 
 print(train_df.shape)
@@ -91,11 +92,22 @@ print(feattrnchl.shape)
 feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
 feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
 
-train_df = pd.concat([train_df, feattrnchl, feattrnos], axis=1)
-test_df  = pd.concat([test_df , feattstchl, feattstos], axis=1)
-del feattrnchl, feattrnos , feattstchl, feattstos
+feattrn = pd.concat([feattrnchl, feattrnos], axis=1)
+feattst = pd.concat([feattstchl, feattstos], axis=1)
 
-import gc
+clip_val = 3600*9
+feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int16)
+feattst = feattst.clip(-clip_val, clip_val).astype(np.int16)
+del feattrnchl, feattrnos , feattstchl, feattstos
+gc.collect()
+
+#feattrn.hist()
+#feattst.hist()
+
+train_df = pd.concat([train_df, feattrn], axis=1)
+test_df  = pd.concat([test_df , feattst], axis=1)
+
+
 gc.collect()
 
 len_train = len(train_df)
@@ -144,8 +156,8 @@ for col in train_df.columns:
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
-val_df = train_df[(len_train-750000):len_train]
-train_df = train_df[:(len_train-750000)]
+val_df = train_df[(len_train-75000000):len_train]
+train_df = train_df[:(len_train-75000000)]
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
