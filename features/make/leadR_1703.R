@@ -15,8 +15,8 @@ getLag = function(df, cols_, fname, path, df_out = FALSE){
   setorderv(df, c(cols_, "click_sec"))
   df[,click_sec_shift_lead := shift(click_sec, 1, type = "lead")]
   df[,click_sec_shift_lag  := shift(click_sec, 1, type = "lag")]
-  df[,seq_lead := .N:1, by = .(ip, device, os) ]
-  df[,seq_lag  := 1:.N, by = .(ip, device, os) ]
+  df[,seq_lead := .N:1, by = cols_ ]
+  df[,seq_lag  := 1:.N, by = cols_ ]
   df[,click_sec_lead := click_sec_shift_lead - click_sec]
   df[,click_sec_lag := click_sec - click_sec_shift_lag]
   df[seq_lead==1, click_sec_lead := -1]
@@ -47,6 +47,13 @@ fname = "lead_lag_trn_ip_device_os_channel_app.gz"
 cols_ = c("ip", "device", "os", "app", "channel")
 getLag(trndf, cols_, fname, path)
 
+
+# Write out the <ip, device, os, channel, app> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channel_appvalsmall.gz"
+cols_ = c("ip", "device", "os", "app", "channel")
+getLag(trndf, cols_, fname, path)
+
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os_channel_app.gz"
@@ -56,53 +63,62 @@ write.csv(feats[setidx==1],
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
-#cols_ = c("ip", "device", "os", "app", "channel")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_os_channel_appvallsmall.gz"
+cols_ = c("ip", "device", "os", "app", "channel")
+getLag(tstdf, cols_, fname, path)
 
 ##################################################
+
 # Write out the <ip, device, os> level
+cols_ = c("ip", "device", "os")
+
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os.gz"
-cols_ = c("ip", "device", "os")
 getLag(trndf, cols_, fname, path)
 
+
+# Write out the <ip, device, os> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_osvalsmall.gz"
+getLag(trndf, cols_, fname, path)
 
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os.gz"
-cols_ = c("ip", "device", "os")
 feats = getLag(tstdf, cols_, fname, path, TRUE)
 write.csv(feats[setidx==1], 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_osvallsmall.gz"
-#cols_ = c("ip", "device", "os")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_osvalsmall.gz"
+getLag(tstdf, cols_, fname, path)
 
 #################################################
 # Write out the <ip, device, os, channel> level
+cols_ = c("ip", "device", "os", "channel")
+
 trndf = fread(paste0(path, 'train.csv'))
 fname = "lead_lag_trn_ip_device_os_channel.gz"
-cols_ = c("ip", "device", "os", "channel")
+getLag(trndf, cols_, fname, path)
+
+# Write out the <ip, device, os, channel> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ip_device_os_channelvalsmall.gz"
 getLag(trndf, cols_, fname, path)
 
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_lag_tst_ip_device_os_channel.gz"
-cols_ = c("ip", "device", "os", "channel")
 feats = getLag(tstdf, cols_, fname, path, TRUE)
 write.csv(feats[setidx==1], 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 
-#tstdf = fread(paste0(path, 'testvalsmall.csv'))
-#fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
-#cols_ = c("ip", "device", "os", "channel")
-#getLag(tstdf, cols_, fname, path)
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
+getLag(tstdf, cols_, fname, path)
 
 ############################################
 ########## Click Rolling Mean ##############
@@ -134,3 +150,6 @@ trndf
 
 table(is.na(trndf$rmeanhr40))
 
+############################################
+################ Lead & Lag ################
+############################################

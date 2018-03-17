@@ -6,6 +6,7 @@ from collections import Counter
 
 
 data_path = "/home/darragh/tdata/data/"
+data_path = "/Users/dhanley2/Documents/tdata/data/"
 fbig   = 'old/test.csv'
 fsmall = 'test.csv'
 ffull  = 'testfull.csv'
