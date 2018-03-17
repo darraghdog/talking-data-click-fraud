@@ -35,7 +35,7 @@ getLag = function(df, cols_, fname, path, df_out = FALSE){
 
 
 path = '~/tdata/data/'
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
 
 ############################################
 ################ Lead & Lag ################

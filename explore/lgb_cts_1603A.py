@@ -76,28 +76,30 @@ dtypes = {
         }
 
 print('load train...')
-train_df = pd.read_csv(path+"trainvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+train_df = pd.read_csv(path+"train.csv", nrows = 80000000, dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('load test...')
-test_df = pd.read_csv(path+"testvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+test_df = pd.read_csv(path+"test.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('load features...')
-feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channelvalsmall.gz', compression = 'gzip')
-feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channelvalsmall.gz', compression = 'gzip')
-feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_osvalsmall.gz', compression = 'gzip')
-feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_osvalsmall.gz', compression = 'gzip')
-#feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel_app_valsmall.gz', compression = 'gzip')
-#feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel_app_valsmall.gz', compression = 'gzip')
-
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel.gz', compression = 'gzip', nrows = 80000000)
+feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel.gz', compression = 'gzip')
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os.gz', compression = 'gzip', nrows = 80000000)
+feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compression = 'gzip')
+feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel_app.gz', compression = 'gzip', nrows = 80000000)
+feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel_app.gz', compression = 'gzip')
+feattrnrma = pd.read_csv(path+'../features/rmean_trn_device_os_app.gz', compression = 'gzip', nrows = 80000000)
+feattstrma = pd.read_csv(path+'../features/rmean_tst_device_os_app.gz', compression = 'gzip')
 
 print(train_df.shape)
 print(feattrnchl.shape)
 
 feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
 feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
+feattstapp.columns = feattrnapp.columns  = [i+'_app' for i in feattrnapp.columns.tolist()]
 
-train_df = pd.concat([train_df, feattrnchl, feattrnos], axis=1)
-test_df  = pd.concat([test_df , feattstchl, feattstos], axis=1)
-del feattrnchl, feattrnos , feattstchl, feattstos
+train_df = pd.concat([train_df, feattrnchl, feattrnos, feattrnapp, feattrnrma], axis=1)
+test_df  = pd.concat([test_df , feattstchl, feattstos, feattstapp, feattstrma], axis=1)
+del feattrnchl, feattrnos , feattstchl, feattstos, feattstapp, feattrnapp
 
 import gc
 gc.collect()
@@ -148,16 +150,17 @@ for col in train_df.columns:
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
-val_df = train_df[(len_train-4500000):len_train]
-train_df = train_df[:(len_train-4500000)]
+val_df = train_df[(len_train-5000000):len_train]
+train_df = train_df[:(len_train-5000000)]
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
 target = 'is_attributed'
-predictors = ['app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', \
-              'click_sec_lag_os', 'click_sec_lag_chl', 'click_sec_lead_os', 'click_sec_lead_chl']
+predictors = ['ip', 'app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count', \
+              'click_sec_lag_os', 'click_sec_lag_chl', 'click_sec_lead_os', 'click_sec_lead_chl', \
+              'count', 'count_hour', 'rmeanhr4', 'rmeanhr40', 'click_sec_lead_app', 'click_sec_lag_app']
 categorical = ['app','device','os', 'channel', 'hour']
 
 
@@ -196,14 +199,19 @@ del train_df
 del val_df
 gc.collect()
 
+# [300]   train's auc: 0.982886   valid's auc: 0.985361
+
+sub.head()
+
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb1503_val.csv',index=False)
+sub.to_csv(path + '../sub/sub_lgb1603A.csv.gz', index=False, compression = 'gzip')
 print("done...")
 print(sub.info())
 
-
-yact  = pd.read_csv(data_path + 'yvalsmall.csv')
+'''
+yact  = pd.read_csv(path + 'yvalsmall.csv')
 fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
 print(metrics.auc(fpr, tpr))
+'''
