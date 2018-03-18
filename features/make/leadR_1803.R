@@ -68,6 +68,34 @@ fname = "lead_lag_tst_ip_device_os_channel_appvalsmall.gz"
 cols_ = c("ip", "device", "os", "app", "channel")
 getLag(tstdf, cols_, fname, path)
 
+
+##################################################
+
+# Write out the <ip, device, os> level
+cols_ = c("ip")
+
+trndf = fread(paste0(path, 'train.csv'))
+fname = "lead_lag_trn_ip.gz"
+getLag(trndf, cols_, fname, path)
+
+# Write out the <ip, device, os> level
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+fname = "lead_lag_trn_ipvalsmall.gz"
+getLag(trndf, cols_, fname, path)
+
+tstdf = fread(paste0(path, 'testfull.csv'))
+setidx = tstdf$dataset
+fname = "lead_lag_tst_ip.gz"
+feats = getLag(tstdf, cols_, fname, path, TRUE)
+write.csv(feats[setidx==1], 
+          gzfile(paste0(path, fname)), 
+          row.names = F, quote = F)
+
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+fname = "lead_lag_tst_ipvalsmall.gz"
+getLag(tstdf, cols_, fname, path)
+
+
 ##################################################
 
 # Write out the <ip, device, os> level
