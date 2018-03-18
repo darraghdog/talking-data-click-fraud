@@ -1,7 +1,7 @@
-cript            Description                    Small_test     Big_test      LB
+cript            Description                    Small_test     LB - All rows LB - 800K rows
 =====================================================================================
 lgb_cts_1503.py  LB lgb with cts and lead lag   0.97064		             0.9697
-lgb_cts_1703.py  LB lgb with cts and lead lag   0.96409
+lgb_cts_1703.py  LB lgb with cts and lead lag   0.96409        0.9701        0.9682
 FTRL_giba1403    Adding lead and lag on channel 0.95945
 FTRL_giba1203B   Cat to cont; lead bucketed     0.95646
 FTRL_giba1203	 Just adding bucketed ip(50s)	0.95494
