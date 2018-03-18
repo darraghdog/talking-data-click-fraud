@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 import lightgbm as lgb
 import gc
+from sklearn import metrics
 
 def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objective='binary', metrics='auc',
                  feval=None, early_stopping_rounds=20, num_boost_round=3000, verbose_eval=10, categorical_features=None):
@@ -65,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-trn_load = 80000000
+trn_load = 190000000
 val_size = 5000000
 
 dtypes = {
@@ -99,20 +100,21 @@ feattrn = pd.concat([feattrnchl, feattrnos], axis=1)
 feattst = pd.concat([feattstchl, feattstos], axis=1)
 del feattrnchl, feattrnos , feattstchl, feattstos
 import gc
+gc.collect()
+feattrn.hist()
+feattst.hist()
 
 clip_val = 3600*9
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
-del feattrnchl, feattrnos , feattstchl, feattstos
 gc.collect()
-
-#feattrn.hist()
-#feattst.hist()
+feattrn.hist()
+feattst.hist()
 
 train_df = pd.concat([train_df, feattrn], axis=1)
 test_df  = pd.concat([test_df , feattst], axis=1)
+del feattrn, feattst
 gc.collect()
-
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
@@ -208,15 +210,14 @@ del train_df
 del val_df
 gc.collect()
 
+imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
+imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
+print(imp)
+
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb1703.csv',index=False)
+sub.to_csv(path + '../sub/sub_lgb1703A.csv',index=False)
 print("done...")
 print(sub.info())
 
-'''
-yact  = pd.read_csv(data_path + 'yvalsmall.csv')
-fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
-print(metrics.auc(fpr, tpr))
-'''
