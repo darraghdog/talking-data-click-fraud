@@ -1,4 +1,4 @@
-cript            Description                    Small_test     LB - All rows LB - 800K rows
+Script           Description                    Small_test     LB - All rows LB - 800K rows
 =====================================================================================
 lgb_cts_1503.py  LB lgb with cts and lead lag   0.97064		             0.9697
 lgb_cts_1703.py  LB lgb feat (more rounds)      0.96636        0.9734
