@@ -25,11 +25,19 @@ calc_entropy <- function(df, group, subgrp, tgt_vn_prefix) {
 
 # Write out the <ip, device, os> level
 keepcols = c('ip', 'os', 'device', 'app', 'channel','click_time')
+<<<<<<< HEAD
 trndf = fread(paste0(path, 'train.csv'))
 #trndf = fread(paste0(path, 'trainvalsmall.csv'))
 trndf = trndf[, keepcols, with=F]
 tstdf = fread(paste0(path, 'old/test.csv'))
 #tstdf = fread(paste0(path, 'testvalsmall.csv'))
+=======
+#trndf = fread(paste0(path, 'train.csv'))
+trndf = fread(paste0(path, 'trainvalsmall.csv'))
+trndf = trndf[, keepcols, with=F]
+#tstdf = fread(paste0(path, 'old/test.csv'))
+tstdf = fread(paste0(path, 'testvalsmall.csv'))
+>>>>>>> 2961af6dd2a130f6d3c60204ff2d0bdf84a7aded
 tstdf = tstdf[, keepcols, with=F]
 gc(); gc()
 
@@ -40,6 +48,8 @@ gc();gc()
 alldf[,click_time := fasttime::fastPOSIXct(click_time)]
 alldf[,click_hr   := as.numeric(format(click_time, "%H"))]
 alldf[,click_min   := as.numeric(format(click_time, "%M"))]
+rm(tstdf, trndf)
+gc();gc()
 
 
 # get the entropy features
@@ -70,4 +80,8 @@ writeme(entropyapp, 'entropyapp')
 writeme(entropychl, 'entropychl')
 
 # trndf = merge(trndf, outipdevos, by="ip", how = "left")
+<<<<<<< HEAD
 # table(cut2(trndf$ip_devos_entropy, g= 20), trndf$is_attributed)
+=======
+# table(cut2(trndf$ip_devos_entropy, g= 20), trndf$is_attributed)
+>>>>>>> 2961af6dd2a130f6d3c60204ff2d0bdf84a7aded
