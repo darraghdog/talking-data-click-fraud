@@ -23,40 +23,51 @@ calc_entropy <- function(df, group, subgrp, tgt_vn_prefix) {
   return(sum4)
 }
 
-entropyHrMin = function(df, user, add_string){
-  ip_visit_hr_entropy <- calc_entropy(df, user,  'click_hr', paste0(add_string, '_visit_hr'))
-  ip_visit_min_entropy <- calc_entropy(df, user , 'click_min', paste0(add_string, '_visit_min'))
-  outdf = merge(ip_visit_hr_entropy, ip_visit_min_entropy, by = user, how="all")
-  return(outdf)
-}
-
 # Write out the <ip, device, os> level
-keepcols = c('ip', 'os', 'device', 'click_time', 'is_attributed')
+keepcols = c('ip', 'os', 'device', 'app', 'channel','click_time')
 trndf = fread(paste0(path, 'train.csv'))
+#trndf = fread(paste0(path, 'trainvalsmall.csv'))
 trndf = trndf[, keepcols, with=F]
 tstdf = fread(paste0(path, 'old/test.csv'))
-tstdf = tstdf[, keepcols[1:4], with=F]
-tstdf$is_attributed = NA
+#tstdf = fread(paste0(path, 'testvalsmall.csv'))
+tstdf = tstdf[, keepcols, with=F]
 gc(); gc()
 
 # Make the full training data
 alldf = rbind(trndf, tstdf)
+rm(tstdf, trndf)
+gc();gc()
 alldf[,click_time := fasttime::fastPOSIXct(click_time)]
 alldf[,click_hr   := as.numeric(format(click_time, "%H"))]
 alldf[,click_min   := as.numeric(format(click_time, "%M"))]
 
+
 # get the entropy features
-outiphrmin = entropyHrMin(alldf, "ip", add_string = 'ip')
-outipdevos <- calc_entropy(alldf, "ip", c('device'), 'ip_devos')
+entropyip  <- calc_entropy(alldf, "ip", 'device', 'ip_device')
+entropyip  <- merge(entropyip, calc_entropy(alldf, "ip", 'os', 'ip_os'), by = 'ip', how="all")
+entropyip  <- merge(entropyip, calc_entropy(alldf, "ip", 'app', 'ip_app'), by = 'ip', how="all")
+entropyip  <- merge(entropyip, calc_entropy(alldf, "ip", 'channel', 'ip_channel'), by = 'ip', how="all")
+entropyip  <- merge(entropyip, calc_entropy(alldf, "ip", 'click_hr', 'ip_click_hr'), by = 'ip', how="all")
+entropyip  <- merge(entropyip, calc_entropy(alldf, "ip", 'click_min', 'ip_click_min'), by = 'ip', how="all")
+
+entropydev <- calc_entropy(alldf, "device", 'os', 'device_os')
+entropydev  <- merge(entropydev, calc_entropy(alldf, "device", 'channel', 'device_channel'), by = 'device', how="all")
+
+entropyapp  <- calc_entropy(alldf, "app", 'channel', 'app_channel')
+entropychl  <- calc_entropy(alldf, "channel", 'app', 'channel_app')
+
+
 
 # Write out the files
-write.csv(outiphrmin, 
-          gzfile(paste0(path, '../features/entropy_ip_hr_minvalsmall.gz')), 
-          row.names = F, quote = F)
-write.csv(outipdevos, 
-          gzfile(paste0(path, '../features/entropy_ip_devosvalsmall.gz')), 
-          row.names = F, quote = F)
+writeme = function(df, name){
+  write.csv(df, 
+            gzfile(paste0(path, '../features/', name,'.gz')), 
+            row.names = F, quote = F)
+}
+writeme(entropyip, 'entropyip')
+writeme(entropydev, 'entropydev')
+writeme(entropyapp, 'entropyapp')
+writeme(entropychl, 'entropychl')
 
-
-trndf = merge(trndf, outipdevos, by="ip", how = "left")
-table(cut2(trndf$ip_devos_entropy, g= 20), trndf$is_attributed)
+# trndf = merge(trndf, outipdevos, by="ip", how = "left")
+# table(cut2(trndf$ip_devos_entropy, g= 20), trndf$is_attributed)
