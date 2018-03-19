@@ -1,6 +1,6 @@
 Script           Description                    Small_test     LB - All rows LB - 800K rows
 =====================================================================================
-lgb_cts_1503.py  LB lgb with cts and lead lag   0.97064		             0.9697
+lgb_cts_1903.py  Adding entropy                 0.96816
 lgb_cts_1703.py  LB lgb feat (more rounds)      0.96636        0.9734
 lgb_cts_1703.py  LB lgb with cts and lead lag   0.96409        0.9701        0.9682
 FTRL_giba1403    Adding lead and lag on channel 0.95945
@@ -10,3 +10,5 @@ FTRL_giba        2 Epochs, public params        0.95319        0.9589        0.9
 
 feat_1003        FFM ./ffm-train -r 0.1 -t 5    0.93351
 
+Overfit
+lgb_cts_1503.py  LB lgb with cts and lead lag   0.97064                      0.9697
