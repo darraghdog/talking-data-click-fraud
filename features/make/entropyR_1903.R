@@ -7,7 +7,7 @@ library(fasttime)
 library(Hmisc)
 
 path = '~/tdata/data/'
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
 
 #compute entropy by group, over subgrp
 calc_entropy <- function(df, group, subgrp, tgt_vn_prefix) {
@@ -32,9 +32,9 @@ entropyHrMin = function(df, user, add_string){
 
 # Write out the <ip, device, os> level
 keepcols = c('ip', 'os', 'device', 'click_time', 'is_attributed')
-trndf = fread(paste0(path, 'trainvalsmall.csv'))
+trndf = fread(paste0(path, 'train.csv'))
 trndf = trndf[, keepcols, with=F]
-tstdf = fread(paste0(path, 'testvalsmall.csv'))
+tstdf = fread(paste0(path, 'old/test.csv'))
 tstdf = tstdf[, keepcols[1:4], with=F]
 tstdf$is_attributed = NA
 gc(); gc()
