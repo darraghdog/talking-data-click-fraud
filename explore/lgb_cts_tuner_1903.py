@@ -223,10 +223,12 @@ print(predictors)
 print(50*'*')
 print(categorical)
 print(50*'*')
-'''
+
 sub = pd.DataFrame()
 sub['click_id'] = test_df['click_id'].astype('int')
-'''
+yact  = pd.read_csv(path + 'yvalsmall.csv')
+yact.columns = ['id', 'is_attributed']
+
 gc.collect()
 
 for (depth, leaves) in zip([2,3,3,4,4,5], [7,7,14,14,25,30]):
@@ -255,10 +257,14 @@ for (depth, leaves) in zip([2,3,3,4,4,5], [7,7,14,14,25,30]):
                             verbose_eval=True, 
                             num_boost_round=3000, 
                             categorical_features=categorical)
+    
+    sub['is_attributed'] = bst.predict(test_df[predictors])
+    fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
+    score = metrics.auc(fpr, tpr)
     with open(path + "../logs/tuner_1903.txt", "a") as myfile:
-        myfile.write("Train size %s, Val size %s, depth %s, leaves %s, best train auc %.5f , best val auc %.5f, best iter %s \n" \
+        myfile.write("Train size %s, Val size %s, depth %s, leaves %s, best train auc %.5f , best val auc %.5f, best test auc %.5f, best iter %s \n" \
                      %(str(train_df.shape[0]), str(val_df.shape[0]), depth, leaves, \
-                     bst.best_score['train']['auc'], bst.best_score['valid']['auc'], str(bst.best_iteration)))
+                     bst.best_score['train']['auc'], bst.best_score['valid']['auc'], score, str(bst.best_iteration)))
 
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]
 # [100]   train's auc: 0.980086   valid's auc: 0.98349
