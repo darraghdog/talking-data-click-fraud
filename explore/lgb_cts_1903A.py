@@ -26,7 +26,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
         'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
         'reg_alpha': 0,  # L1 regularization term on weights
         'reg_lambda': 0,  # L2 regularization term on weights
-        'nthread': 8,
+        'nthread': 16,
         'verbose': 0,
         'metric':metrics
     }
@@ -66,7 +66,8 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-trn_load = 180000000
+path = '/home/ubuntu/tdata/data/'
+trn_load = 190000000
 val_size = 5000000
 
 dtypes = {
@@ -92,7 +93,8 @@ feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os.gz', compre
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os.gz', compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os.gz', compression = 'gzip').astype(np.int8)
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
-
+featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float16)
+featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
 
 def sumfeat(df):
     dfsum = df.iloc[:,0] + df.iloc[:,1]
@@ -146,12 +148,6 @@ train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
 train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 gc.collect()
 
-print('add entropy')
-train_df = train_df.merge(featentip, on=['ip'], how='left')
-train_df.head()
-del featentip, featentdev, featentchl, featentapp
-
-
 print('group by...unique app per ip/dev/os/')
 gp = train_df[['device', 'ip', 'os', 'app']].groupby(by=['device', 'ip', 'os'])[['app']].nunique().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevos'})
 print('merge...')
@@ -185,6 +181,9 @@ train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
 del gp
 gc.collect()
 
+print('add entropy')
+train_df = train_df.merge(featentip, on=['ip'], how='left')
+train_df.head()
 
 print("vars and data type: ")
 train_df.info()
@@ -192,12 +191,18 @@ train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
+train_df.drop(['ip_os_entropy.y', 'day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
+gc.collect()
+
 
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
 val_df = train_df[(len_train-val_size):len_train]
 train_df = train_df[:(len_train-val_size)]
+train_df.drop(['click_id'], axis = 1, inplace = True)
+val_df.drop(['click_id'], axis = 1, inplace = True)
+gc.collect()
 
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
@@ -244,7 +249,7 @@ bst = lgb_modelfit_nocv(params,
                         metrics='auc',
                         early_stopping_rounds=50, 
                         verbose_eval=True, 
-                        num_boost_round=300, 
+                        num_boost_round=3000, 
                         categorical_features=categorical)
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]
 # [100]   train's auc: 0.980086   valid's auc: 0.98349
@@ -262,10 +267,11 @@ print(imp)
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb1903.csv',index=False, compression = 'gzip')
+sub.to_csv(path + '../sub/sub_lgb1903A.csv.gz',index=False, compression = 'gzip')
 print("done...")
 print(sub.info())
 
+'''
 yact  = pd.read_csv(path + 'yvalsmall.csv')
 yact.columns = ['id', 'is_attributed']
 fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
@@ -276,7 +282,7 @@ print(metrics.auc(fpr, tpr))
 # 0.966364
 # 0.96777
 # 0.968164
-
+'''
 
 
 

@@ -26,7 +26,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
         'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
         'reg_alpha': 0,  # L1 regularization term on weights
         'reg_lambda': 0,  # L2 regularization term on weights
-        'nthread': 8,
+        'nthread': 16,
         'verbose': 0,
         'metric':metrics
     }
@@ -66,7 +66,8 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-trn_load = 80000000
+path = '/home/ubuntu/tdata/data/'
+trn_load = 190000000
 val_size = 5000000
 
 dtypes = {
@@ -111,6 +112,7 @@ print(feattrnchl.shape)
 feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
 feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
 
+print('Concat features')
 feattrn = pd.concat([feattrnchl, feattrnos], axis=1)
 feattst = pd.concat([feattstchl, feattstos], axis=1)
 feattrn['click_sec_lsum_os'] = sumfeat(feattrnos)
@@ -120,17 +122,18 @@ feattst['click_sec_lsum_chl'] = sumfeat(feattstchl)
 del feattrnchl, feattrnos , feattstchl, feattstos
 import gc
 gc.collect()
-feattrn.hist()
-feattst.hist()
+#feattrn.hist()
+#feattst.hist()
 
+print('Clip features....')
 clip_val = 3600*9
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
 gc.collect()
-feattrn.hist()
-feattst.hist()
+#feattrn.hist()
+#feattst.hist()
 
-train_df.head()
+print(train_df.head())
 
 train_df = pd.concat([train_df, feattrn, feattrnnext], axis=1)
 test_df  = pd.concat([test_df , feattst, feattstnext], axis=1)
@@ -206,7 +209,7 @@ lead_cols += [col for col in train_df.columns if 'next_' in col]
 
 target = 'is_attributed'
 predictors = ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count'] + lead_cols
-categorical = ['channel_app', 'app','device','os', 'channel', 'hour']
+categorical = ['ip', 'channel_app', 'app','device','os', 'channel', 'hour']
 print(50*'*')
 print(predictors)
 print(50*'*')
@@ -241,7 +244,7 @@ bst = lgb_modelfit_nocv(params,
                         metrics='auc',
                         early_stopping_rounds=50, 
                         verbose_eval=True, 
-                        num_boost_round=300, 
+                        num_boost_round=1000, 
                         categorical_features=categorical)
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]
 # [100]   train's auc: 0.980086   valid's auc: 0.98349
