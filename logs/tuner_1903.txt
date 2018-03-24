@@ -1,0 +1,33 @@
+Train size 40000000, Val size 10000000, depth 2, leaves 7, best train auc 0.93759 , lr 0.01, best val auc 0.94787, best test auc 0.91426, best iter 21 
+Train size 40000000, Val size 10000000, depth 2, leaves 7, best train auc 0.98102 , lr 0.01, best val auc 0.98075, best test auc 0.97060, best iter 232 
+Train size 40000000, Val size 10000000, depth 3, leaves 7, best train auc 0.98294 , lr 0.01, best val auc 0.98041, best test auc 0.97219, best iter 183 
+Train size 40000000, Val size 10000000, depth 3, leaves 14, best train auc 0.98149 , lr 0.01, best val auc 0.98019, best test auc 0.97072, best iter 114 
+Train size 40000000, Val size 10000000, depth 4, leaves 14, best train auc 0.98242 , lr 0.01, best val auc 0.97859, best test auc 0.97131, best iter 91 
+Train size 40000000, Val size 10000000, depth 4, leaves 25, best train auc 0.98302 , lr 0.01, best val auc 0.97969, best test auc 0.97184, best iter 96 
+Train size 40000000, Val size 10000000, depth 5, leaves 30, best train auc 0.98345 , lr 0.01, best val auc 0.97659, best test auc 0.97194, best iter 75 
+Train size 40000000, Val size 10000000, depth 2, leaves 7, best train auc 0.98102 , lr 0.01, best val auc 0.98075, best test auc 0.97060, best iter 232 
+Train size 40000000, Val size 10000000, depth 3, leaves 7, best train auc 0.98294 , lr 0.01, best val auc 0.98041, best test auc 0.97211, best iter 183 
+Train size 40000000, Val size 10000000, depth 3, leaves 14, best train auc 0.98149 , lr 0.01, best val auc 0.98019, best test auc 0.97072, best iter 114 
+Train size 40000000, Val size 10000000, depth 4, leaves 14, best train auc 0.98242 , lr 0.01, best val auc 0.97859, best test auc 0.97131, best iter 91 
+Train size 40000000, Val size 10000000, depth 4, leaves 25, best train auc 0.98302 , lr 0.01, best val auc 0.97969, best test auc 0.97184, best iter 96 
+Train size 40000000, Val size 10000000, depth 5, leaves 30, best train auc 0.98345 , lr 0.01, best val auc 0.97659, best test auc 0.97194, best iter 75 
+Train size 40000000, Val size 10000000, depth 5, leaves 2, best train auc 0.97854 , lr 0.01, best val auc 0.97919, best test auc 0.96807, best iter 420 
+Train size 40000000, Val size 10000000, depth 5, leaves 4, best train auc 0.98156 , lr 0.01, best val auc 0.98143, best test auc 0.97102, best iter 227 
+Train size 40000000, Val size 10000000, depth 5, leaves 6, best train auc 0.98251 , lr 0.01, best val auc 0.98100, best test auc 0.97201, best iter 163 
+Train size 40000000, Val size 10000000, depth 5, leaves 8, best train auc 0.98270 , lr 0.01, best val auc 0.98074, best test auc 0.97215, best iter 124 
+Train size 40000000, Val size 10000000, depth 5, leaves 10, best train auc 0.98245 , lr 0.01, best val auc 0.98015, best test auc 0.97174, best iter 96 
+Train size 40000000, Val size 10000000, depth 5, leaves 12, best train auc 0.98322 , lr 0.01, best val auc 0.97882, best test auc 0.97208, best iter 102 
+Train size 40000000, Val size 10000000, depth 5, leaves 14, best train auc 0.98209 , lr 0.01, best val auc 0.97845, best test auc 0.97096, best iter 77 
+Train size 40000000, Val size 10000000, depth 5, leaves 16, best train auc 0.98383 , lr 0.01, best val auc 0.97797, best test auc 0.97223, best iter 99 
+Train size 40000000, Val size 10000000, depth 5, leaves 18, best train auc 0.98173 , lr 0.01, best val auc 0.97756, best test auc 0.97068, best iter 66 
+Train size 40000000, Val size 10000000, depth 5, leaves 20, best train auc 0.98294 , lr 0.01, best val auc 0.97738, best test auc 0.97162, best iter 76 
+Train size 40000000, Val size 10000000, depth 5, leaves 22, best train auc 0.98421 , lr 0.01, best val auc 0.97798, best test auc 0.97255, best iter 94 
+Train size 40000000, Val size 10000000, depth 5, leaves 24, best train auc 0.98324 , lr 0.01, best val auc 0.97757, best test auc 0.97169, best iter 75 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 3, best train auc 0.90362 , lr 0.01, best val auc 1.00000, best test auc 0.89540, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 4, best train auc 0.92650 , lr 0.01, best val auc 1.00000, best test auc 0.90643, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 5, best train auc 0.94990 , lr 0.01, best val auc 1.00000, best test auc 0.93630, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 6, best train auc 0.94888 , lr 0.01, best val auc 1.00000, best test auc 0.93703, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 7, best train auc 0.94888 , lr 0.01, best val auc 1.00000, best test auc 0.93703, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 8, best train auc 0.95720 , lr 0.01, best val auc 1.00000, best test auc 0.93964, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 9, best train auc 0.95749 , lr 0.01, best val auc 1.00000, best test auc 0.94203, best iter 1 
+Train size 49999000, Val size 1000, depth 5, leaves 22, col_sample 10, best train auc 0.95753 , lr 0.01, best val auc 1.00000, best test auc 0.94222, best iter 1 
