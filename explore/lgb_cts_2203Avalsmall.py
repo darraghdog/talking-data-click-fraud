@@ -12,6 +12,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
         'boosting_type': 'gbdt',
         'objective': objective,
         'metric':metrics,
+        'use_missing':False,
         'learning_rate': 0.01,
         #'is_unbalance': 'true',  #because training data is unbalance (replaced with scale_pos_weight)
         'num_leaves': 31,  # we should let it be smaller than 2^(max_depth)
@@ -95,14 +96,19 @@ feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_osvalsmall.gz'
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_osvalsmall.gz', compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_osvalsmall.gz', compression = 'gzip').astype(np.int8)
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
-#featentdev = pd.read_csv(path+'../features/entropydev.gz', compression = 'gzip')
-#featentchl = pd.read_csv(path+'../features/entropychl.gz', compression = 'gzip')
-#featentapp = pd.read_csv(path+'../features/entropyapp.gz', compression = 'gzip')
-featnitip   = pd.read_csv(path+'../features/niteratio_ip.gz', compression = 'gzip')
-featnitipdo = pd.read_csv(path+'../features/niteratio_ipdevos.gz', compression = 'gzip')
-featrnbmip  = pd.read_csv(path+'../features/bmeantrn_ip.gz', compression = 'gzip')
-featstbmip  = pd.read_csv(path+'../features/bmeantst_ip.gz', compression = 'gzip')
-featstbmip.head()
+featentdev = pd.read_csv(path+'../features/entropydev.gz', compression = 'gzip')
+featentchl = pd.read_csv(path+'../features/entropychl.gz', compression = 'gzip')
+featentapp = pd.read_csv(path+'../features/entropyapp.gz', compression = 'gzip')
+
+#rolldtypes = {
+#        'roll_mean_five'            : 'int32',
+#        'roll_min_five'             : 'int32',
+#        'roll_max_five'             : np.float16
+#        'roll_var_five'             : np.float16
+#        }
+#feattrnroll  = pd.read_csv(path+'../features/roll_five_trn.gz', compression = 'gzip', dtype=rolldtypes)
+#feattstroll  = pd.read_csv(path+'../features/roll_five_tst.gz', compression = 'gzip').astype(np.int8)
+#feattrnroll.tail()
 
 def sumfeat(df):
     dfsum = df.iloc[:,0] + df.iloc[:,1]
@@ -145,16 +151,6 @@ del feattrn, feattst, feattrnnext, feattstnext
 gc.collect()
 
 
-train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
-test_df['day']  = pd.to_datetime(test_df.click_time).dt.day.astype('uint8')
-
-print('add bayes mean per ip')
-featrnbmip['day'] = featrnbmip['click_day'] + 5
-train_df = train_df.merge(featrnbmip, on=['ip', 'day'], how='left')
-test_df = test_df.merge( featrnbmip, on=['ip', 'day'], how='left')
-train_df.head()
-
-
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 
@@ -163,27 +159,19 @@ gc.collect()
 
 print('data prep...')
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
-#train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
+train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 gc.collect()
-train_df.head()
-
-train_df['day'].value_counts()
-
 
 print('add entropy')
 train_df = train_df.merge(featentip, on=['ip'], how='left')
-#train_df = train_df.merge(featentdev, on=['device'], how='left')
-#train_df = train_df.merge(featentchl, on=['channel'], how='left')
-#train_df = train_df.merge(featentapp, on=['app'], how='left')
+train_df = train_df.merge(featentdev, on=['device'], how='left')
+train_df = train_df.merge(featentchl, on=['channel'], how='left')
+train_df = train_df.merge(featentapp, on=['app'], how='left')
 train_df.head()
-del featentip#, featentdev, featentchl, featentapp
-
-print('add nite ratio')
-train_df = train_df.merge(featnitip, on=['ip'], how='left')
-train_df = train_df.merge(featnitipdo, on=['ip', 'os', 'device'], how='left')
+del featentip, featentdev, featentchl, featentapp
 
 
-print('group by...unique app per ip/dev/os')
+print('group by...unique app per ip/dev/os/')
 gp = train_df[['device', 'ip', 'os', 'app']].groupby(by=['device', 'ip', 'os'])[['app']].nunique().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevos'})
 print('merge...')
 train_df = train_df.merge(gp[['device', 'ip', 'os', 'unique_app_ipdevos']], on=['device', 'ip', 'os'], how='left')
@@ -224,6 +212,15 @@ train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 
+print('Get common to train and test')
+for col in ['app', 'channel', 'channel_app', 'ip']:  
+    gc.collect()
+    print('Get common to train and test : %s'%(col))
+    common = pd.Series(list(set(train_df[:(len_train-val_size)][col]) & set(train_df[len_train:][col])))
+    train_df[col][~train_df[col].isin(common)] = np.nan
+    del common
+    gc.collect()
+
 train_df.head(10)
 print(train_df.shape)
 test_df = train_df[len_train:]
@@ -237,7 +234,6 @@ print("test size : ", len(test_df))
 lead_cols = [col for col in train_df.columns if 'click_sec_l' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += [col for col in train_df.columns if 'bmean' in col]
 
 target = 'is_attributed'
 predictors = ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count'] + lead_cols
@@ -265,7 +261,8 @@ params = {
     'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
     'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-    'scale_pos_weight':99 # because training data is extremely unbalanced 
+    'scale_pos_weight':99, # because training data is extremely unbalanced 
+    'use_missing':False
 }
 bst = lgb_modelfit_nocv(params, 
                         train_df, 
@@ -278,16 +275,10 @@ bst = lgb_modelfit_nocv(params,
                         verbose_eval=True, 
                         num_boost_round=300, 
                         categorical_features=categorical)
-
-#[50]    train's auc: 0.977201   valid's auc: 0.981998
-#[100]   train's auc: 0.981975   valid's auc: 0.985597
-#[200]   train's auc: 0.984426   valid's auc: 0.987188
-#[300]   train's auc: 0.985448   valid's auc: 0.987529
-
-train_df.head()
-train_df['device'].unique().shape
-
-# channel - 187, app - 480,  os - 461, device 2110
+# [50]    train's auc: 0.975884   valid's auc: 0.98071]
+# [100]   train's auc: 0.980086   valid's auc: 0.98349
+# [200]   train's auc: 0.981959   valid's auc: 0.984601]
+# [300]   train's auc: 0.98272    valid's auc: 0.985072
 
 del train_df
 del val_df
@@ -300,7 +291,7 @@ print(imp)
 print("Predicting...")
 sub['is_attributed'] = bst.predict(test_df[predictors])
 print("writing...")
-sub.to_csv(path + '../sub/sub_lgb2003_val.csv',index=False, compression = 'gzip')
+sub.to_csv(path + '../sub/sub_lgb1903_val.csv',index=False, compression = 'gzip')
 print("done...")
 print(sub.info())
 
@@ -314,40 +305,40 @@ print(metrics.auc(fpr, tpr))
 # 0.966364
 # 0.96777
 # 0.968164
-# 0.968696
-# 0.969392
 
 
 
 
 #Model Report
 #('n_estimators : ', 0)
-#('auc:', 0.9870205655080436)
-#                         feat  imp
-#0                 channel_app  569
-#1                          os  225
-#2                     channel  176
-#3          click_sec_lead_chl  119
-#4        ip_click_min_entropy   84
-#5                         app   82
-#6                        hour   81
-#7                         qty   70
-#8           ip_device_entropy   54
-#9               ip_os_entropy   46
-#10          click_sec_lead_os   37
-#11                     device   34
-#12             ip_app_entropy   33
-#13            ip_app_os_count   30
-#14              same_next_app   30
-#15         ip_channel_entropy   23
-#16        ip_click_hr_entropy   19
-#17                         ip   17
-#18       bmean_nite_clicks_ip   14
-#19  bmean_nite_clicks_ipdevos   10
-#20           click_sec_lag_os   10
-#21          click_sec_lsum_os    9
-#22         click_sec_lsum_chl    8
-#23              same_next_chl    7
-#24               ip_app_count    7
-#25          click_sec_lag_chl    6
-#26                        day    0
+#('auc:', 0.9870154876414095)
+#                      feat  imp
+#0              channel_app  580
+#1                       os  214
+#2                  channel  175
+#3       click_sec_lead_chl  114
+#4                      app   94
+#5                     hour   89
+#6     ip_click_min_entropy   86
+#7                      qty   71
+#8        ip_device_entropy   47
+#9            ip_os_entropy   45
+#10          ip_app_entropy   35
+#11       click_sec_lead_os   35
+#12                  device   35
+#13           same_next_app   30
+#14      ip_channel_entropy   25
+#15         ip_app_os_count   23
+#16                      ip   22
+#17     ip_click_hr_entropy   20
+#18      click_sec_lsum_chl   15
+#19       click_sec_lsum_os   13
+#20        click_sec_lag_os    8
+#21       click_sec_lag_chl    8
+#22            ip_app_count    7
+#23           same_next_chl    7
+#24       device_os_entropy    1
+#25     app_channel_entropy    1
+#26                     day    0
+#27  device_channel_entropy    0
+#28     channel_app_entropy    0

@@ -10,13 +10,13 @@ path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
 # Write out the <ip, device, os> level
-keepcols = c("ip", "os", "device", "click_time", "is_attributed")
+keepcols = c("ip", "os", "device", "app", "click_time", "is_attributed")
 trndf = fread(paste0(path, 'train.csv'))
 trndf = trndf[,keepcols,with=F]
 trndf[,is_train:=1]
 gc(); gc()
 tstdf = fread(paste0(path, 'old/test.csv'))
-tstdf = tstdf[,keepcols[1:4],with=F]
+tstdf = tstdf[,keepcols[1:(length(keepcols)-1)],with=F]
 tstdf[, is_train:=0]
 tstdf[, is_attributed := NA]
 gc(); gc()
@@ -26,13 +26,13 @@ gc(); gc()
 
 # Make the full training data
 alldf[, click_time := fasttime::fastPOSIXct(click_time)]
-alldf[, click_day   := as.numeric(format(click_time, "%w"))]
+alldf[, click_day  := as.numeric(format(click_time, "%d"))]
 alldf
 alldf[, click_time := NULL ]
 gc();gc()
 
-alldf[,.N, by= click_day]
-alldf[,mean(is_attributed, na.rm = T), by = click_day]
+#alldf[,.N, by= click_day]
+#alldf[,mean(is_attributed, na.rm = T), by = click_day]
 
 # Function for out of fold Bayes mean
 oofBMean = function(df, fold, cols_, allrows_ = FALSE){
@@ -55,19 +55,34 @@ oofBMean = function(df, fold, cols_, allrows_ = FALSE){
   return(outdf)
 }
 
-# Get bayes mean ip using days as folds
-cols_ = "ip"
 
-# Get global mean and count
 days_ = unique(alldf[(is_train == 1)]$click_day)
-outdfls = list()
-for (fold in days_){
-  print(paste0("Calculating day ...", fold))
-  outdfls[[length(outdfls)+1]] = oofBMean(alldf, fold, "ip" )
-}
 
-train_bmean = do.call(rbind, outdfls)
-test_bmean  = oofBMean(alldf, 99, "ip", allrows_ = TRUE)
+# Get bayes mean ip using days as folds
+days_ = unique(alldf[(is_train == 1)]$click_day)
+# days --- 6, 7, 8, 9
+outdfls = list()
+for (fold in days_) outdfls[[length(outdfls)+1]] = oofBMean(alldf, fold, "ip" )
+trnbmeanip = do.call(rbind, outdfls)
+tstbmeanip  = oofBMean(alldf, 99, "ip", allrows_ = TRUE)
+
+# Get bayes mean ip using days as folds
+outdfls = list()
+for (fold in days_) outdfls[[length(outdfls)+1]] = oofBMean(alldf, fold, "device" )
+trnbmeandev = do.call(rbind, outdfls)
+tstbmeandev  = oofBMean(alldf, 99, "device", allrows_ = TRUE)
+
+# Get bayes mean ip using days as folds
+outdfls = list()
+for (fold in days_) outdfls[[length(outdfls)+1]] = oofBMean(alldf, fold, "os" )
+trnbmeanos = do.call(rbind, outdfls)
+tstbmeanos  = oofBMean(alldf, 99, "os", allrows_ = TRUE)
+
+# Get bayes mean ip using days as folds
+outdfls = list()
+for (fold in days_) outdfls[[length(outdfls)+1]] = oofBMean(alldf, fold, "app" )
+trnbmeanapp = do.call(rbind, outdfls)
+tstbmeanapp  = oofBMean(alldf, 99, "app", allrows_ = TRUE)
 
 # Write out the files
 writeme = function(df, name){
@@ -75,7 +90,13 @@ writeme = function(df, name){
             gzfile(paste0(path, '../features/', name,'.gz')), 
             row.names = F, quote = F)
 }
-writeme(train_bmean, 'bmeantrn_ip')
-writeme(test_bmean , 'bmeantst_ip')
-hist(train_bmean$bmean, breaks = 1000, xlim = c(0, 0.05))
-hist(test_bmean$bmean, breaks = 1000, xlim = c(0, 0.05))
+writeme(trnbmeanip, 'bmeantrn_ip')
+writeme(tstbmeanip, 'bmeantst_ip')
+writeme(trnbmeanapp, 'bmeantrn_app')
+writeme(tstbmeanapp, 'bmeantst_app')
+writeme(trnbmeanos, 'bmeantrn_os')
+writeme(tstbmeanos, 'bmeantst_os')
+writeme(trnbmeandev, 'bmeantrn_dev')
+writeme(tstbmeandev, 'bmeantst_dev')
+hist(trnbmeanos$bmean, breaks = 1000, xlim = c(0, 0.05))
+hist(tstbmeanos$bmean, breaks = 1000, xlim = c(0, 0.05))

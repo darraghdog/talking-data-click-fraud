@@ -100,8 +100,15 @@ featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 #featentapp = pd.read_csv(path+'../features/entropyapp.gz', compression = 'gzip')
 featnitip   = pd.read_csv(path+'../features/niteratio_ip.gz', compression = 'gzip')
 featnitipdo = pd.read_csv(path+'../features/niteratio_ipdevos.gz', compression = 'gzip')
-featrnbmip  = pd.read_csv(path+'../features/bmeantrn_ip.gz', compression = 'gzip')
-featstbmip  = pd.read_csv(path+'../features/bmeantst_ip.gz', compression = 'gzip')
+bmean_dtypes = {'bmean' : 'float16'}
+featrnbmip  = pd.read_csv(path+'../features/bmeantrn_ip.gz', compression = 'gzip', dtype = bmean_dtypes)
+featstbmip  = pd.read_csv(path+'../features/bmeantst_ip.gz', compression = 'gzip', dtype = bmean_dtypes)
+featrnbmos  = pd.read_csv(path+'../features/bmeantrn_os.gz', compression = 'gzip', dtype = bmean_dtypes)
+featstbmos  = pd.read_csv(path+'../features/bmeantst_os.gz', compression = 'gzip', dtype = bmean_dtypes)
+featrnbmapp  = pd.read_csv(path+'../features/bmeantrn_app.gz', compression = 'gzip', dtype = bmean_dtypes)
+featstbmapp  = pd.read_csv(path+'../features/bmeantst_app.gz', compression = 'gzip', dtype = bmean_dtypes)
+featrnbmdev  = pd.read_csv(path+'../features/bmeantrn_dev.gz', compression = 'gzip', dtype = bmean_dtypes)
+featstbmdev  = pd.read_csv(path+'../features/bmeantst_dev.gz', compression = 'gzip', dtype = bmean_dtypes)
 featstbmip.head()
 
 def sumfeat(df):
@@ -149,10 +156,17 @@ train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 test_df['day']  = pd.to_datetime(test_df.click_time).dt.day.astype('uint8')
 
 print('add bayes mean per ip')
-featrnbmip['day'] = featrnbmip['click_day'] + 5
-train_df = train_df.merge(featrnbmip, on=['ip', 'day'], how='left')
-test_df = test_df.merge( featrnbmip, on=['ip', 'day'], how='left')
-train_df.head()
+# featrnbmip['day'] = featrnbmip['click_day'] + 5
+
+for (fdftrn, fdftst, s_) in [(featrnbmip, featstbmip, 'ip'), (featrnbmdev, featstbmdev, 'device'), \
+               (featrnbmapp, featstbmapp, 'app'), (featrnbmos, featstbmos, 'os')]: 
+    print('join bmean'+s_)
+    print(fdftrn.shape, fdftst.shape)
+    fdftrn.rename(columns =  {'click_day':'day', 'bmean':'bmean_'+s_}, inplace = True)
+    fdftst.rename(columns =  {'click_day':'day', 'bmean':'bmean_'+s_}, inplace = True)
+    train_df = train_df.merge(fdftrn, on=[s_, 'day'], how='left')
+    test_df = test_df.merge(fdftrn, on=[s_, 'day'], how='left')
+    gc.collect()
 
 
 len_train = len(train_df)
@@ -172,10 +186,6 @@ train_df['day'].value_counts()
 
 print('add entropy')
 train_df = train_df.merge(featentip, on=['ip'], how='left')
-#train_df = train_df.merge(featentdev, on=['device'], how='left')
-#train_df = train_df.merge(featentchl, on=['channel'], how='left')
-#train_df = train_df.merge(featentapp, on=['app'], how='left')
-train_df.head()
 del featentip#, featentdev, featentchl, featentapp
 
 print('add nite ratio')
@@ -312,11 +322,11 @@ print(metrics.auc(fpr, tpr))
 # 0.965109
 # 0.96590
 # 0.966364
-# 0.96777
-# 0.968164
+# 0.96777 
+# 0.968164 - xx last sub ?
 # 0.968696
 # 0.969392
-
+# 0.969419 -- with the extra 3 types of bayes mean
 
 
 
