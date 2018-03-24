@@ -69,7 +69,7 @@ path = '/Users/dhanley2/Documents/tdata/data/'
 path = '/home/ubuntu/tdata/data/'
 
 trn_load = 70000000
-val_size = 10000000
+val_size = 1000
 
 dtypes = {
         'ip'            : 'uint32',
@@ -229,26 +229,29 @@ sub['click_id'] = test_df['click_id'].astype('int')
 yact  = pd.read_csv(path + 'yvalsmall.csv')
 yact.columns = ['id', 'is_attributed']
 
+test_df[target] = yact[target] 
 gc.collect()
 
-for (depth, leaves) in zip([2,3,3,4,4,5], [7,7,14,14,25,30]):
+for colsamp in range(3,11):
+    leaves = 22
+    depth = 5
     print("Training... depth %s, leaves%s"%(depth, leaves))
     params = {
         'learning_rate': 0.1,
         #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-        'num_leaves': depth,  # 7 we should let it be smaller than 2^(max_depth)
+        'num_leaves': leaves,  # 7 we should let it be smaller than 2^(max_depth)
         'max_depth': depth,  # 3-1 means no limit
         'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
         'max_bin': 100,  # Number of bucketed bin for feature values
         'subsample': 0.7,  # Subsample ratio of the training instance.
         'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-        'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+        'colsample_bytree': colsamp/10,  # Subsample ratio of columns when constructing each tree.
         'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
         'scale_pos_weight':99 # because training data is extremely unbalanced 
     }
     bst = lgb_modelfit_nocv(params, 
-                            train_df[:500000], 
-                            val_df, 
+                            train_df, 
+                            test_df, #val_df, 
                             predictors, 
                             target, 
                             objective='binary', 
@@ -262,8 +265,8 @@ for (depth, leaves) in zip([2,3,3,4,4,5], [7,7,14,14,25,30]):
     fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
     score = metrics.auc(fpr, tpr)
     with open(path + "../logs/tuner_1903.txt", "a") as myfile:
-        myfile.write("Train size %s, Val size %s, depth %s, leaves %s, best train auc %.5f , best val auc %.5f, best test auc %.5f, best iter %s \n" \
-                     %(str(train_df.shape[0]), str(val_df.shape[0]), depth, leaves, \
+        myfile.write("Train size %s, Val size %s, depth %s, leaves %s, col_sample %s, best train auc %.5f , lr 0.01, best val auc %.5f, best test auc %.5f, best iter %s \n" \
+                     %(str(train_df.shape[0]), str(val_df.shape[0]), depth, leaves, colsamp, \
                      bst.best_score['train']['auc'], bst.best_score['valid']['auc'], score, str(bst.best_iteration)))
 
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]

@@ -27,7 +27,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
         'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
         'reg_alpha': 0,  # L1 regularization term on weights
         'reg_lambda': 0,  # L2 regularization term on weights
-        'nthread': 8,
+        'nthread': 16, #8,
         'verbose': 0,
         'metric':metrics
     }
@@ -190,7 +190,7 @@ train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 
 print('Get common to train and test')
-for col in ['app', 'channel', 'channel_app', 'ip']:  
+for col in ['app', 'channel', 'channel_app', 'ip', 'os', 'hour', 'device']:  
     gc.collect()
     print('Get common to train and test : %s'%(col))
     common = pd.Series(list(set(train_df[:(len_train-val_size)][col]) & set(train_df[len_train:][col])))
