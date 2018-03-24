@@ -79,6 +79,15 @@ dtypes = {
         'is_attributed' : 'uint8',
         'click_id'      : 'uint32'
         }
+ctdtypes = {
+        'ip_app_channel_var_day'    : np.float32,
+        'qty'                       : 'uint32',
+        'ip_app_count'              : 'uint32',
+        'ip_app_os_count'           : 'uint32',
+        'qty_var'                   : np.float32,
+        'ip_app_os_var'             : np.float32,
+        'ip_app_channel_mean_hour'  : np.float32
+        }
 
 print('load train...')
 train_df = pd.read_csv(path+"trainvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
@@ -90,6 +99,8 @@ feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channelvals
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channelvalsmall.gz', compression = 'gzip')
 feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_osvalsmall.gz', compression = 'gzip')
 feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_osvalsmall.gz', compression = 'gzip')
+feattrnct  = pd.read_csv(path+'../features/counttrnvalsmall.gz', dtype=ctdtypes, compression = 'gzip')
+feattstct  = pd.read_csv(path+'../features/counttstvalsmall.gz', dtype=ctdtypes, compression = 'gzip')
 #feattrnapp  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel_appvalsmall.gz', compression = 'gzip')
 #feattstapp  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel_appvalsmall.gz', compression = 'gzip')
 
@@ -124,8 +135,8 @@ print(feattrnchl.shape)
 feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
 feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
 
-feattrn = pd.concat([feattrnchl, feattrnos], axis=1)
-feattst = pd.concat([feattstchl, feattstos], axis=1)
+feattrn = pd.concat([feattrnchl, feattrnos, feattrnct], axis=1)
+feattst = pd.concat([feattstchl, feattstos, feattstct], axis=1)
 feattrn['click_sec_lsum_os'] = sumfeat(feattrnos)
 feattrn['click_sec_lsum_chl'] = sumfeat(feattrnchl)
 feattst['click_sec_lsum_os'] = sumfeat(feattstos)
@@ -170,41 +181,6 @@ train_df = train_df.merge(featentapp, on=['app'], how='left')
 train_df.head()
 del featentip, featentdev, featentchl, featentapp
 
-
-print('group by...unique app per ip/dev/os/')
-gp = train_df[['device', 'ip', 'os', 'app']].groupby(by=['device', 'ip', 'os'])[['app']].nunique().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevos'})
-print('merge...')
-train_df = train_df.merge(gp[['device', 'ip', 'os', 'unique_app_ipdevos']], on=['device', 'ip', 'os'], how='left')
-del gp
-gc.collect()
-
-train_df.head()
-
-train_df.rename(columns={'unique_app_ipdevos_x': 'unique_app_ipdevos'}, inplace = True)
-
-
-
-print('group by...')
-gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
-print('merge...')
-train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
-del gp
-gc.collect()
-
-print('group by...')
-gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
-train_df = train_df.merge(gp, on=['ip','app'], how='left')
-del gp
-gc.collect()
-
-
-print('group by...')
-gp = train_df[['ip','app', 'os', 'channel']].groupby(by=['ip', 'app', 'os'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_os_count'})
-train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
-del gp
-gc.collect()
-
-
 print("vars and data type: ")
 train_df.info()
 train_df['qty'] = train_df['qty'].astype('uint16')
@@ -234,9 +210,11 @@ print("test size : ", len(test_df))
 lead_cols = [col for col in train_df.columns if 'click_sec_l' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
+lead_cols += ['ip_app_channel_var_day', 'qty', 'ip_app_count', 'ip_app_os_count']
+lead_cols += ['qty_var', 'ip_app_os_var','ip_app_channel_mean_hour']
 
 target = 'is_attributed'
-predictors = ['channel_app', 'app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count'] + lead_cols
+predictors = ['ip', 'channel_app', 'app','device','os', 'channel', 'hour', 'day', 'qty', 'ip_app_count', 'ip_app_os_count'] + lead_cols
 categorical = ['ip', 'channel_app', 'app','device','os', 'channel', 'hour']
 print(50*'*')
 print(predictors)
@@ -278,12 +256,12 @@ bst = lgb_modelfit_nocv(params,
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]
 # [100]   train's auc: 0.980086   valid's auc: 0.98349
 # [200]   train's auc: 0.981959   valid's auc: 0.984601]
-# [300]   train's auc: 0.98272    valid's auc: 0.985072
+# [300]   train's auc: 0.98272    valid's auc: 0.985072  == 0.9871
 
 del train_df
 del val_df
 gc.collect()
-train_df.shape
+#train_df.shape
 
 imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
 imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)

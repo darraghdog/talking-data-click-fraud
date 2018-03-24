@@ -9,7 +9,9 @@ from sklearn import metrics
 
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
+
+validation = False
 
 dtypes = {
         'ip'            : 'uint32',
@@ -21,10 +23,18 @@ dtypes = {
         'click_id'      : 'uint32'
         }
 
-print('load train...')
-train_df = pd.read_csv(path+"trainvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time'])
-print('load test...')
-test_df = pd.read_csv(path+"testvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time'])
+if validation:
+    print('load train...')
+    train_df = pd.read_csv(path+"trainvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time'])
+    print('load test...')
+    test_df = pd.read_csv(path+"testvalsmall.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time'])
+else:
+    print('load train...')
+    train_df = pd.read_csv(path+"train.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time'])
+    print('load test...')
+    test_df = pd.read_csv(path+"testfull.csv", dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'dataset'])
+    train_df['dataset'] = 0
+
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
@@ -93,7 +103,12 @@ gc.collect()
 train_df.fillna(9999999, inplace = True)
 train_df.head()
 
-outcols = train_df.columns.tolist()[7:]
 
-train_df[:len_train][outcols].to_csv(path+'../features/counttrnvalsmall.gz', compression='gzip', index=False)
-train_df[len_train:][outcols].to_csv(path+'../features/counttstvalsmall.gz', compression='gzip', index=False)
+if validation:
+    outcols = train_df.columns.tolist()[7:]
+    train_df[:len_train][outcols].to_csv(path+'../features/counttrnvalsmall.gz', compression='gzip', index=False)
+    train_df[len_train:][outcols].to_csv(path+'../features/counttstvalsmall.gz', compression='gzip', index=False)
+else:
+    outcols = train_df.columns.tolist()[8:]
+    train_df[:len_train][outcols].to_csv(path+'../features/counttrn.gz', compression='gzip', index=False)
+    train_df[train_df['dataset']==1][outcols].to_csv(path+'../features/counttst.gz', compression='gzip', index=False)
