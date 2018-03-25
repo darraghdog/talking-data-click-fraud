@@ -91,7 +91,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 if validation:
     add_ = 'valsmall'
 else:
@@ -101,14 +101,14 @@ else:
 print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
-test_df = pd.read_csv(path+"test.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
+test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'click_id'])
 
 print('[{}] Load Features'.format(time.time() - start_time))
 lagdtypes= {
-'click_sec_lag_chl'     : np.float16,
-'click_sec_lag_os'      : np.float16,
-'click_sec_lead_chl'    : np.float16,
-'click_sec_lead_os'     : np.float16
+'click_sec_lag_chl'     : 'int64',
+'click_sec_lag_os'      : 'int64',
+'click_sec_lead_chl'    : 'int64',
+'click_sec_lead_os'     : 'int64'
 }
 feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip', dtype=lagdtypes)
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip', dtype=lagdtypes)
@@ -213,7 +213,7 @@ gc.collect()
 
 print('[{}] Get ip counts'.format(time.time() - start_time))
 ipct = train_df['ip'].value_counts().reset_index().rename(index=str, columns={'ip': 'ip_count'})
-common_ips = ipct[ipct['ip_count']>100]['index'].tolist()
+common_ips = ipct[ipct['ip_count']>1000]['index'].tolist()
 del ipct 
 gc.collect()
 
@@ -284,6 +284,10 @@ sub = pd.DataFrame()
 sub['click_id'] = test_df['click_id'].astype('int')
 
 gc.collect()
+ntrees = 3000
+if validation:
+	ntrees = 300
+
 
 print('[{}] Training ... '.format(time.time() - start_time))
 
@@ -310,7 +314,7 @@ bst = lgb_modelfit_nocv(params,
                         metrics='auc',
                         early_stopping_rounds=30, 
                         verbose_eval=True, 
-                        num_boost_round=3000, 
+                        num_boost_round=ntrees, 
                         categorical_features=categorical)
 # [50]	train's auc: 0.97787	valid's auc: 0.981515
 # [100]	train's auc: 0.984844	valid's auc: 0.984266
@@ -333,10 +337,11 @@ sub.to_csv(path + '../sub/sub_lgb2403%s.csv'%(add_),index=False, compression = '
 print('[{}] Done ... '.format(time.time() - start_time))
 print(sub.info())
 
-#yact  = pd.read_csv(path + 'yvalsmall.csv')
-#yact.columns = ['id', 'is_attributed']
-#fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
-#print(metrics.auc(fpr, tpr))
+if validation:
+	yact  = pd.read_csv(path + 'yvalsmall.csv')
+	yact.columns = ['id', 'is_attributed']
+	fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
+	print(metrics.auc(fpr, tpr))
 # 0.965052
 # 0.965109
 # 0.96590

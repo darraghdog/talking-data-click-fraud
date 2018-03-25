@@ -1,5 +1,6 @@
 Script                     Description                    Small_test     LB - All rows LB - 800K rows
 =====================================================================================
+lgb_cts_2203D		   Common over 1000 ct ip's       0.971364
 lgb_cts_2203Bvalsmall.py   Get the common to trn & tst(hr)0.9712361
 lgb_cts_2203Bvalsmall.py   Get the common to trn & tst    0.97140
 lgb_cts_1903A.py           Adding entropy                 0.96816        0.9743
