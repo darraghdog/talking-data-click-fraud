@@ -246,7 +246,12 @@ if not validation:
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
 else:
-    val_df = test_df
+    val_df = test_df.sample(frac=0.025, replace=False, random_state=0)
+    
+print('[{}] Drop features complete'.format(time.time() - start_time))
+print("train size: ", len(train_df))
+print("valid size: ", len(val_df))
+print("test size : ", len(test_df))
 
 gc.collect()
 
@@ -264,6 +269,8 @@ params = {
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
     'scale_pos_weight':99 # because training data is extremely unbalanced 
 }
+
+
 bst = lgb_modelfit_nocv(params, 
                         train_df, 
                         val_df, 
@@ -273,7 +280,7 @@ bst = lgb_modelfit_nocv(params,
                         metrics='auc',
                         early_stopping_rounds=50, 
                         verbose_eval=True, 
-                        num_boost_round=300, 
+                        num_boost_round=200, 
                         categorical_features=categorical)
 # [50]    train's auc: 0.975884   valid's auc: 0.98071]
 # [100]   train's auc: 0.980086   valid's auc: 0.98349
@@ -294,58 +301,42 @@ if not validation:
 else:
     max_ip = 126413
     preds =   bst.predict(test_df[predictors])
-    predsip = bst.predict(test_df[test['ip']<=max_ip][predictors])
+    predsip = bst.predict(test_df[test_df['ip']<=max_ip][predictors])
     fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, predsip, pos_label=1)
+    fpr, tpr, thresholds = metrics.roc_curve(test_df[test_df['ip']<=max_ip]['is_attributed'].values, predsip, pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr, tpr)))
     
     
 '''
-yact  = pd.read_csv(path + 'yvalsmall.csv')
-yact.columns = ['id', 'is_attributed']
-fpr, tpr, thresholds = metrics.roc_curve(yact['is_attributed'].values, sub['is_attributed'], pos_label=1)
-print(metrics.auc(fpr, tpr))
-# 0.965052
-# 0.965109
-# 0.96590
-# 0.966364
-# 0.96777
-# 0.968164
+Auc for all hours in testval : 0.9748485829778458
+Auc for select hours in testval : 0.9500396455475636
 '''
 
 
 
-#Model Report
-#('n_estimators : ', 0)
-#('auc:', 0.9870154876414095)
-#                      feat  imp
-#0              channel_app  580
-#1                       os  214
-#2                  channel  175
-#3       click_sec_lead_chl  114
-#4                      app   94
-#5                     hour   89
-#6     ip_click_min_entropy   86
-#7                      qty   71
-#8        ip_device_entropy   47
-#9            ip_os_entropy   45
-#10          ip_app_entropy   35
-#11       click_sec_lead_os   35
-#12                  device   35
-#13           same_next_app   30
-#14      ip_channel_entropy   25
-#15         ip_app_os_count   23
-#16                      ip   22
-#17     ip_click_hr_entropy   20
-#18      click_sec_lsum_chl   15
-#19       click_sec_lsum_os   13
-#20        click_sec_lag_os    8
-#21       click_sec_lag_chl    8
-#22            ip_app_count    7
-#23           same_next_chl    7
-#24       device_os_entropy    1
-#25     app_channel_entropy    1
-#26                     day    0
-#27  device_channel_entropy    0
-#28     channel_app_entropy    0
+#                    feat  imp
+#0            channel_app  344
+#1                     os  124
+#2                channel  117
+#3     click_sec_lead_chl   93
+#4                    app   83
+#5                   hour   69
+#6                    qty   66
+#7   ip_click_min_entropy   58
+#8        ip_app_os_count   32
+#9      ip_device_entropy   32
+#10                device   26
+#11        ip_app_entropy   26
+#12         same_next_app   24
+#13     click_sec_lead_os   23
+#14   ip_click_hr_entropy   22
+#15         ip_os_entropy   15
+#16    ip_channel_entropy   14
+#17     click_sec_lag_chl    9
+#18                    ip    6
+#19     click_sec_lsum_os    5
+#20    click_sec_lsum_chl    4
+#21         same_next_chl    4
+#22          ip_app_count    3
+#23      click_sec_lag_os    1

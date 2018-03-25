@@ -1,3 +1,20 @@
+Script                     Description                    Iters  Val          Val lowIp       LB
+_______________________________________________________________________________________________
+lgb_cts_2503baseline.py    Adding entropy                 200    0.974848     0.95003         0.9743
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Script                     Description                    Small_test     LB - All rows LB - 800K rows
 =====================================================================================
 lgb_cts_2203D		   Common over 1000 ct ip's       0.971364
