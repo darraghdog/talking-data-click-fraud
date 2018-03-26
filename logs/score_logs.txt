@@ -1,8 +1,9 @@
-Script                     Description                    Iters  Val          Val lowIp       LB
-_______________________________________________________________________________________________
-lgb_cts_2503baseline.py    Adding entropy                 200    0.974848     0.95003         0.9743
-lgb_cts_2503B.py           Putting IP as catgeory         200    0.973638     0.94740      
-lgb_cts_2503B.py           Interact of app/chl & os/chl   200    0.97256      0.94526
+Script                     Description                    ValIters FullIters  Val          Val lowIp       LB
+__________________________________________________________________________________________________________________
+lgb_cts_2503D.py           Adding lead time per app click 200      500        0.980202     0.96088         0.9799
+lgb_cts_2503baseline.py    Adding entropy                 200      ?          0.974848     0.95003         0.9743
+lgb_cts_2503B.py           Putting IP as catgeory         200      ?          0.973638     0.94740      
+lgb_cts_2503B.py           Interact of app/chl & os/chl   200      ?          0.97256      0.94526
 
 
 
