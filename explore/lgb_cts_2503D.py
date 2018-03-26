@@ -66,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -88,12 +88,17 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 if validation:
     add_ = 'val'
+    ntrees = 200
+    early_stop = 50
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
+    ntrees = 500
+    val_size = 10000
+    early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
 
@@ -148,7 +153,7 @@ feattrn['click_sec_lag_sameappchl'] = \
         (feattrn['click_sec_lag_chl']==feattrn['click_sec_lag_app']).astype('int8')
 feattst['click_sec_lag_sameappchl'] = \
         (feattst['click_sec_lag_chl']==feattst['click_sec_lag_app']).astype('int8')
-del feattrnchl, feattrnos, feattstchl, feattstos, feattstapp, feattstapp
+del feattrnchl, feattrnos, feattstchl, feattstos, feattrnapp, feattstapp
 import gc
 gc.collect()
 #feattrn.hist()
@@ -303,9 +308,9 @@ bst = lgb_modelfit_nocv(params,
                         target, 
                         objective='binary', 
                         metrics='auc',
-                        early_stopping_rounds=50, 
+                        early_stopping_rounds=early_stop, 
                         verbose_eval=True, 
-                        num_boost_round=200, 
+                        num_boost_round=ntrees, 
                         categorical_features=categorical)
 
 gc.collect()
