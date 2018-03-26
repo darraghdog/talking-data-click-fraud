@@ -120,6 +120,23 @@ tstdf = fread(paste0(path, 'testvalsmall.csv'))
 fname = "lead_lag_tst_ip_device_os_channelvalsmall.gz"
 getLag(tstdf, cols_, fname, path)
 
+
+# Write out the <ip, device, os, channel> level
+cols_ = c("ip", "device", "os", "app")
+
+trndf = fread(paste0(path, 'train.csv'))
+fname = "lead_lag_trn_ip_device_os_app.gz"
+getLag(trndf, cols_, fname, path)
+
+tstdf = fread(paste0(path, 'testfull.csv'))
+setidx = tstdf$dataset
+fname = "lead_lag_tst_ip_device_os_app.gz"
+feats = getLag(tstdf, cols_, fname, path, TRUE)
+write.csv(feats[setidx==1], 
+          gzfile(paste0(path, fname)), 
+          row.names = F, quote = F)
+
+
 ############################################
 ########## Click Rolling Mean ##############
 ############################################
