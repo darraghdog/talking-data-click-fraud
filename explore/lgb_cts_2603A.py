@@ -114,18 +114,20 @@ feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.g
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os%s.gz'%(add_), compression = 'gzip')
 feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os%s.gz'%(add_), compression = 'gzip')
-feattrncum = pd.read_csv(path+'../features/cum_min_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattstcum = pd.read_csv(path+'../features/cum_min_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+#feattrncum = pd.read_csv(path+'../features/cum_min_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+#feattstcum = pd.read_csv(path+'../features/cum_min_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
-featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
-featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float16)
-featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
+featentip    = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip', dtype=dtypes)
+featentidoa   = pd.read_csv(path+'../features/entropyipdevosapp.gz', compression = 'gzip', dtype=dtypes)
+featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
+featentidoa.iloc[:,:2] = featentidoa.iloc[:,:2].astype(np.float32)
+feattrnct = pd.read_csv(path+'../features/counttrn%s.gz'%(add_), compression = 'gzip', dtype = ctdtypes)
+feattstct = pd.read_csv(path+'../features/counttst%s.gz'%(add_), compression = 'gzip', dtype = ctdtypes)
 
-feattrncum.head()
-
+feattstct.head()
 
 print('[{}] Finishesd Loading Features, start concatenate'.format(time.time() - start_time))
 def sumfeat(df):
@@ -162,10 +164,9 @@ gc.collect()
 clip_val = 3600*9
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
-feattrn = pd.concat([feattrn, feattrnld2, feattrncum], axis=1)
-feattst = pd.concat([feattst, feattstld2, feattstcum], axis=1)
-del feattrnld2, feattrncum
-del feattstld2, feattstcum
+feattrn = pd.concat([feattrn, feattrnld2.astype(np.int32), feattrnct], axis=1)
+feattst = pd.concat([feattst, feattstld2.astype(np.int32), feattstct], axis=1)
+del feattrnld2, feattstld2
 gc.collect()
 #feattrn.hist()
 #feattst.hist()
@@ -226,17 +227,21 @@ train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
 del gp
 gc.collect()
 
+train_df.dtypes
 print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
+#train_df = train_df.merge(featentido, on=['ip', 'device', 'os'], how='left')
+train_df = train_df.merge(featentidoa, on=['ip', 'device', 'os', 'app'], how='left')
+gc.collect()
 train_df.head()
 
-featentip.head()
+train_df[['ip_app_count_x', 'ip_app_count_y']].head()
 
 print('[{}] Data types'.format(time.time() - start_time))
 train_df.info()
-train_df['qty'] = train_df['qty'].astype('uint16')
-train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
-train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
+#train_df['qty'] = train_df['qty'].astype('uint16')
+#train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
+#train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 train_df.drop(['day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
 gc.collect()
@@ -271,9 +276,12 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
+lead_cols += [col for col in train_df.columns if 'ip_app_' in col]
+lead_cols += [col for col in train_df.columns if 'qty_' in col]
+lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
-predictors = ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count'] + lead_cols
+predictors = ['channel_app', 'ip', 'app','device','os', 'channel', 'hour'] + lead_cols
 categorical = ['channel_app', 'app','device','os', 'channel', 'hour']
 print(50*'*')
 print(predictors)
@@ -287,7 +295,7 @@ if not validation:
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
 else:
-    val_df = test_df.sample(frac=0.025, replace=False, random_state=0)
+    val_df = test_df#.sample(frac=0.025, replace=False, random_state=0)
     
 print('[{}] Drop features complete'.format(time.time() - start_time))
 print("train size: ", len(train_df))
@@ -350,7 +358,16 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
 
 '''
-# Click sec lead of app
+Adding all the count files
+Auc for all hours in testval : 0.980298
+[200]   train's auc: 0.986054   valid's auc: 0.980298
+[500]   train's auc: 0.987705   valid's auc: 0.981702
+Early stopping, best iteration is:
+[802]   train's auc: 0.988406   valid's auc: 0.982014
+'''
+
+'''
+# Click shift 2
 Auc for all hours in testval : 0.980384724718358
 Auc for select hours in testval : 0.9613318834326467
 '''

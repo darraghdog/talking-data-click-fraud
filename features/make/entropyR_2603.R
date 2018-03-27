@@ -7,7 +7,7 @@ library(fasttime)
 library(Hmisc)
 
 path = '~/tdata/data/'
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
 
 #compute entropy by group, over subgrp
 calc_entropy <- function(df, group, subgrp, tgt_vn_prefix) {
@@ -25,11 +25,11 @@ calc_entropy <- function(df, group, subgrp, tgt_vn_prefix) {
 
 # Write out the <ip, device, os> level
 keepcols = c('ip', 'os', 'device', 'app', 'channel','click_time')
-#trndf = fread(paste0(path, 'train.csv'))
-trndf = fread(paste0(path, 'trainvalsmall.csv'))
+trndf = fread(paste0(path, 'train.csv'))
+#trndf = fread(paste0(path, 'trainvalsmall.csv'))
 trndf = trndf[, keepcols, with=F]
-#tstdf = fread(paste0(path, 'old/test.csv'))
-tstdf = fread(paste0(path, 'testvalsmall.csv'))
+tstdf = fread(paste0(path, 'testfull.csv'))
+#tstdf = fread(paste0(path, 'testvalsmall.csv'))
 tstdf = tstdf[, keepcols, with=F]
 gc(); gc()
 
