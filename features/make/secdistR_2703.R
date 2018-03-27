@@ -35,13 +35,18 @@ feattrn  = getSplitLead(trndf, cols_, fname, path, TRUE)
 write.csv(feattrn, 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
+rm(featstrn, trndf)
+gc()
+# table(cut2(feattrn$click_sec_lead_split_sec[1:10000000], g = 100), trndf$is_attributed[1:10000000])
 
 tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_split_sec_tst_ip_device_os_app.gz"
 featstst = getSplitLead(tstdf, cols_, fname, path)
-write.csv(featstst2, 
+write.csv(featstst, 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
+rm(featstst, tstdf)
+gc()
 
 
