@@ -209,11 +209,9 @@ train_df.rename(columns={'unique_app_ipdevos_x': 'unique_app_ipdevos'}, inplace 
 print('[{}] group by...count app per ip/dev/os/min'.format(time.time() - start_time))
 gp = train_df[['device', 'ip', 'os', 'app', 'minute']].groupby(by=['device', 'ip', 'os', 'minute'])[['app']].count().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevosmin'})
 print('merge...')
-train_df = train_df.merge(gp[['device', 'ip', 'os', 'minute', 'unique_app_ipdevos']], on=['device', 'ip', 'os', 'minute'], how='left')
+train_df = train_df.merge(gp[['device', 'ip', 'os', 'minute', 'unique_app_ipdevosmin']], on=['device', 'ip', 'os', 'minute'], how='left')
 del gp
 gc.collect()
-train_df.rename(columns={'unique_app_ipdevos_x': 'unique_app_ipdevos'}, inplace = True)
-
 
 print('[{}] group by...unique app per ip/day/hr/chl'.format(time.time() - start_time))
 gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
@@ -286,7 +284,7 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
+lead_cols += ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin', 'unique_app_ipdevossec']
 lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
@@ -371,6 +369,10 @@ else:
     fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
 
+'''
+Auc for all hours in testval : 0.9810998331513668
+Auc for select hours in testval : 0.9625975906187854
+'''
 '''
 # Split sec lead app
 Auc for all hours in testval : 0.9809818567872455
