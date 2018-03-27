@@ -66,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 500
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -192,11 +192,10 @@ del test_df
 gc.collect()
 
 print('[{}] Time prep'.format(time.time() - start_time))
-train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
-train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
-train_df['minute'] = pd.to_datetime(train_df.click_time).dt.minute.astype('uint8')
+train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint16')
+train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint16')
+train_df['minute'] = pd.to_datetime(train_df.click_time).dt.minute.astype('uint16')
 gc.collect()
-
 
 print('[{}] group by...unique app per ip/dev/os'.format(time.time() - start_time))
 gp = train_df[['device', 'ip', 'os', 'app']].groupby(by=['device', 'ip', 'os'])[['app']].nunique().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevos'})
@@ -284,7 +283,7 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin', 'unique_app_ipdevossec']
+lead_cols += ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
@@ -357,7 +356,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb2703A.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
