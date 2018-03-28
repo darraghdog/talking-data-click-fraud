@@ -37,9 +37,16 @@ base_ft <- alldf$is_train ==1
 mean_y0 = mean(alldf$is_attributed, na.rm = T)
 calc_exp2(alldf, base_ft, 'is_attributed', c('ip'), 'enc2_ip', k = 1000, mean_y0 = mean_y0, verbose=T)
 calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os'), 'enc2_ipdevos', k = 500, mean_y0 = mean_y0, verbose=T)
-
 writeme(alldf[is_train==1, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_trnval" )
-writeme(alldf[is_train==0, .(een2_ip, enc2_ipdevos)] , "enc_ipdevos_tstval" )
+writeme(alldf[is_train==0, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_tstval" )
 
+
+alldf = make_alldf("")
+base_ft <- alldf$is_train ==1
+mean_y0 = mean(alldf$is_attributed, na.rm = T)
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip'), 'enc2_ip', k = 1000, mean_y0 = mean_y0, verbose=T)
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os'), 'enc2_ipdevos', k = 500, mean_y0 = mean_y0, verbose=T)
+writeme(alldf[is_train==1, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_trn" )
+writeme(alldf[is_train==0, .(een2_ip, enc2_ipdevos)] , "enc_ipdevos_tst" )
 
 
