@@ -3,6 +3,11 @@ library(RcppRoll)
 library(fasttime)
 library(Hmisc)
 
+writeme = function(df, name){
+  write.csv(df, 
+            gzfile(paste0(path, '../features/', name,'.gz')), 
+            row.names = F, quote = F)
+}
 
 #response encoder for categorical features, with credibility adjustment and leave-one-out
 calc_exp2 <- function(dt, ft, vn_y, by, tgt_vn, k, mean_y0=NULL, verbose=F) {
