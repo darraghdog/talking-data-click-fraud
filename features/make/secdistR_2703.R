@@ -43,7 +43,7 @@ tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead_split_sec_tst_ip_device_os_app.gz"
 featstst = getSplitLead(tstdf, cols_, fname, path)
-write.csv(featstst, 
+write.csv(featstst[setidx==1], 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 rm(featstst, tstdf)

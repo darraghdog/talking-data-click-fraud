@@ -166,7 +166,7 @@ tstdf = fread(paste0(path, 'testfull.csv'))
 setidx = tstdf$dataset
 fname = "lead2_tst_ip_device_os_app.gz"
 featstst2 = getLead(tstdf, cols_, fname, path, TRUE, shift_n = 2)
-write.csv(featstst2, 
+write.csv(featstst2[setidx==1], 
           gzfile(paste0(path, fname)), 
           row.names = F, quote = F)
 

@@ -284,12 +284,12 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += ['channel_app', 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
+lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
 predictors =  lead_cols
-categorical = ['channel_app', 'app','device','os', 'channel', 'hour']
+categorical = [ 'app','device','os', 'channel', 'hour'] #'channel_app',
 print(50*'*')
 print(predictors)
 print(50*'*')
@@ -339,13 +339,10 @@ bst = lgb_modelfit_nocv(params,
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
 
-# [50]    train's auc: 0.979403   valid's auc: 0.974265
-#[100]   train's auc: 0.983698   valid's auc: 0.978772
-#[200]   train's auc: 0.985962   valid's auc: 0.981068
-
-# [50]    train's auc: 0.980588   valid's auc: 0.975761
-# [100]   train's auc: 0.984389   valid's auc: 0.979814
-# [200]   train's auc: 0.986348   valid's auc: 0.981456
+# [20]    train's auc: 0.973256   valid's auc: 0.967426
+# [50]    train's auc: 0.980096   valid's auc: 0.975396
+# [100]   train's auc: 0.984011   valid's auc: 0.979477
+# [200]   train's auc: 0.985963   valid's auc: 0.98142
 
 
 gc.collect()
@@ -368,6 +365,13 @@ else:
     idx = test_df['ip']<=max_ip
     fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+
+
+'''
+Without channel app
+Auc for all hours in testval : 0.98135282046753
+Auc for select hours in testval : 0.9631544908471926
+'''
 
 '''
 Auc for all hours in testval : 0.9810998331513668
