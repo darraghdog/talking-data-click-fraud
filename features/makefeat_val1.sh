@@ -1,13 +1,12 @@
 
-# lead_split_sec_trn_ip_device_os_appchl
-gunzip lead_split_sec_trn_ip_device_os_appchl.gz
-sed -n 1,1p lead_split_sec_trn_ip_device_os_appchl > lead_split_sec_trn_ip_device_os_appchlval
-sed -n 60000000,122080000p lead_split_sec_trn_ip_device_os_appchl >> lead_split_sec_trn_ip_device_os_appchlval
-
-sed -n 1,1p lead_split_sec_trn_ip_device_os_appchl > lead_split_sec_tst_ip_device_os_appchlval
-sed -n 144710000,152400000p lead_split_sec_trn_ip_device_os_appchl >> lead_split_sec_tst_ip_device_os_appchlval
-sed -n 162000000,168300000p lead_split_sec_trn_ip_device_os_appchl >> lead_split_sec_tst_ip_device_os_appchlval
-sed -n 175000000,181880000p lead_split_sec_trn_ip_device_os_appchl >> lead_split_sec_tst_ip_device_os_appchlval
-gzip lead_split_sec_trn_ip_device_os_appchl
-gzip lead_split_sec_trn_ip_device_os_appchlval
-gzip lead_split_sec_tst_ip_device_os_appchlval
+# prevdayipchlqty
+gunzip  prevdayipchlqtytrn.gz
+sed -n 1,1p prevdayipchlqtytrn > prevdayipchlqtytrnval
+sed -n 60000000,122080000p prevdayipchlqtytrn >> prevdayipchlqtytrnval
+sed -n 1,1p prevdayipchlqtytrn > prevdayipchlqtytstval
+sed -n 144710000,152400000p prevdayipchlqtytrn >> prevdayipchlqtytstval
+sed -n 162000000,168300000p  prevdayipchlqtytrn >> prevdayipchlqtytstval
+sed -n 175000000,181880000p  prevdayipchlqtytrn >> prevdayipchlqtytstval
+gzip prevdayipchlqtytrnval
+gzip prevdayipchlqtytstval
+gzip prevdayipchlqtytrn

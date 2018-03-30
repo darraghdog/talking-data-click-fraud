@@ -1,3 +1,4 @@
+*.vec
 *.out
 *.gz
 *.bin

@@ -107,13 +107,11 @@ train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','a
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
-np.finfo(np.float32).min
-
 print('[{}] Load Features'.format(time.time() - start_time))
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_appchl%s.gz'%(add_), compression = 'gzip').astype(np.float32)
-feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_appchl%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
 feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os%s.gz'%(add_), compression = 'gzip')
@@ -124,11 +122,13 @@ feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
+feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip').astype(np.int32)
+feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip').astype(np.int32)
+
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
 
-feattrnspl.head()
 
 print('[{}] Finished Loading Features, start concatenate'.format(time.time() - start_time))
 def sumfeat(df):
@@ -179,9 +179,9 @@ print(test_df.shape)
 
 
 print('[{}] Concat Train/Test'.format(time.time() - start_time))
-train_df = pd.concat([train_df, feattrn, feattrnnext], axis=1)
-test_df  = pd.concat([test_df , feattst, feattstnext], axis=1)
-del feattrn, feattst, feattrnnext, feattstnext
+train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev], axis=1)
+test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev], axis=1)
+del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev
 gc.collect()
 
 
@@ -217,11 +217,12 @@ del gp
 gc.collect()
 
 print('[{}] group by...unique app per ip/day/hr/chl'.format(time.time() - start_time))
-gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
+gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty_chl'})
 print('merge...')
 train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
 del gp
 gc.collect()
+
 
 print('[{}] group by...unique app per ip/app/chl'.format(time.time() - start_time))
 gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
@@ -287,7 +288,8 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
+lead_cols += [col for col in train_df.columns if 'qty' in col]
+lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
@@ -314,61 +316,71 @@ print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
-print('[{}] Training...'.format(time.time() - start_time))
-params = {
-    'learning_rate': 0.1,
-    #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-    'num_leaves': 7,  # we should let it be smaller than 2^(max_depth)
-    'max_depth': 3,  # -1 means no limit
-    'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-    'max_bin': 100,  # Number of bucketed bin for feature values
-    'subsample': 0.7,  # Subsample ratio of the training instance.
-    'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
-    'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-    'scale_pos_weight':99 # because training data is extremely unbalanced 
-}
+
+for d in [3,4,5]:
+    for n_leaves in [7,10,15]:
+        print('[{}] Training... depth {}, leaves {}'.format(time.time() - start_time, d, n_leaves))
+        params = {
+            'learning_rate': 0.1,
+            #'is_unbalance': 'true', # replaced with scale_pos_weight argument
+            'num_leaves': n_leaves,#7,  # we should let it be smaller than 2^(max_depth)
+            'max_depth': d,#3,  # -1 means no limit
+            'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
+            'max_bin': 100,  # Number of bucketed bin for feature values
+            'subsample': 0.7,  # Subsample ratio of the training instance.
+            'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
+            'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+            'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
+            'scale_pos_weight':99 # because training data is extremely unbalanced 
+        }
+        
+        
+        bst = lgb_modelfit_nocv(params, 
+                                train_df, 
+                                val_df, 
+                                predictors, 
+                                target, 
+                                objective='binary', 
+                                metrics='auc',
+                                early_stopping_rounds=early_stop, 
+                                verbose_eval=True, 
+                                num_boost_round=ntrees, 
+                                categorical_features=categorical)
+
+    #[20]    train's auc: 0.973749   valid's auc: 0.969085
+    #[50]    train's auc: 0.980581   valid's auc: 0.975329
+    #[100]   train's auc: 0.984159   valid's auc: 0.979585
+    #[150]   train's auc: 0.985282   valid's auc: 0.980771
+    #[200]   train's auc: 0.986022   valid's auc: 0.981313
+    
+    
+    gc.collect()
+    imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
+    imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
+    print(imp)
+    
+    if not validation:
+        print("Predicting...")
+        sub['is_attributed'] = bst.predict(test_df[predictors])
+        print("writing...")
+        sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
+        print("done...")
+        print(sub.info())
+    else:
+        max_ip = 126413
+        preds =   bst.predict(test_df[predictors])
+        fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
+        print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+        idx = test_df['ip']<=max_ip
+        fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+        print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
 
 
-bst = lgb_modelfit_nocv(params, 
-                        train_df, 
-                        val_df, 
-                        predictors, 
-                        target, 
-                        objective='binary', 
-                        metrics='auc',
-                        early_stopping_rounds=early_stop, 
-                        verbose_eval=True, 
-                        num_boost_round=ntrees, 
-                        categorical_features=categorical)
-
-# [20]    train's auc: 0.973256   valid's auc: 0.967426
-# [50]    train's auc: 0.980096   valid's auc: 0.975396
-# [100]   train's auc: 0.984011   valid's auc: 0.979477
-# [200]   train's auc: 0.985963   valid's auc: 0.98142
-
-
-gc.collect()
-imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
-imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
-print(imp)
-
-if not validation:
-    print("Predicting...")
-    sub['is_attributed'] = bst.predict(test_df[predictors])
-    print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
-    print("done...")
-    print(sub.info())
-else:
-    max_ip = 126413
-    preds =   bst.predict(test_df[predictors])
-    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-    idx = test_df['ip']<=max_ip
-    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-
+'''
+# yesterday's counts
+Auc for all hours in testval : 0.9814525641122481
+Auc for select hours in testval : 0.9633034562183045
+'''
 
 '''
 Without channel app
@@ -398,30 +410,33 @@ Auc for all hours in testval : 0.9802027274200331
 Auc for select hours in testval : 0.9608878940255907
 '''
 
-#                     feat  imp
-#0                 channel_app  321
-#1                          os  141
-#2    click_sec_lead_split_sec  133
-#3                     channel  112
-#4                         qty   77
-#5                         app   69
-#6          click_sec_lead_app   52
-#7        ip_click_min_entropy   42
-#8                        hour   37
-#9                      device   27
-#10          ip_device_entropy   24
-#11         ip_channel_entropy   23
-#12        ip_click_hr_entropy   23
-#13              ip_os_entropy   21
-#14            ip_app_os_count   21
-#15             ip_app_entropy   20
-#16      click_sec_lead_shift2   14
-#17          click_sec_lag_app   11
-#18                         ip    8
-#19         click_sec_lead_chl    7
-#20               ip_app_count    6
-#21          click_sec_lead_os    4
-#22              same_next_app    3
-#23          click_sec_lag_chl    3
-#24  click_sec_lead_sameappchl    1
-#25              same_next_chl    0
+#                         feat  imp
+#0                     channel  256
+#1                         app  224
+#2                          os  131
+#3    click_sec_lead_split_sec  127
+#4          click_sec_lead_app   50
+#5                        hour   42
+#6                     qty_chl   38
+#7                         qty   36
+#8        ip_click_min_entropy   34
+#9               ip_os_entropy   30
+#10                     device   27
+#11          ip_device_entropy   26
+#12             ip_app_entropy   24
+#13                prevday_qty   19
+#14        ip_click_hr_entropy   19
+#15         ip_channel_entropy   19
+#16      unique_app_ipdevosmin   18
+#17      click_sec_lead_shift2   14
+#18          click_sec_lag_app   14
+#19            ip_app_os_count   11
+#20               ip_app_count   11
+#21         click_sec_lead_chl    9
+#22          click_sec_lead_os    7
+#23                         ip    5
+#24           click_sec_lag_os    5
+#25  click_sec_lead_sameappchl    2
+#26              same_next_app    1
+#27          click_sec_lag_chl    1
+#28              same_next_chl    0

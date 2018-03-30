@@ -107,13 +107,11 @@ train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','a
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
-np.finfo(np.float32).min
-
 print('[{}] Load Features'.format(time.time() - start_time))
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_appchl%s.gz'%(add_), compression = 'gzip').astype(np.float32)
-feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_appchl%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
 feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os%s.gz'%(add_), compression = 'gzip')
@@ -124,11 +122,12 @@ feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
+fastText10K  = pd.read_csv(path+'../features/ftdim10000.csv.gz', compression = 'gzip')#.astype(np.int32)
+fastText10K.iloc[:,2:] = fastText10K.iloc[:,2:].astype(np.float16)
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
 
-feattrnspl.head()
 
 print('[{}] Finished Loading Features, start concatenate'.format(time.time() - start_time))
 def sumfeat(df):
@@ -240,7 +239,16 @@ print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
 train_df.head()
 
-featentip.head()
+print('[{}] Add fastText dimensions'.format(time.time() - start_time))
+fastTextos = fastText10K[fastText10K['ftkey']=='os']
+fastTextos.rename(columns={'value': 'os'}, inplace = True)
+fastTextos.drop('ftkey', axis = 1, inplace = True)
+train_df = train_df.merge(fastTextos, on=['os'], how='left')
+fill_cols = [col for col in train_df.columns if 'dim' in col]
+train_df[fill_cols] = train_df[fill_cols].fillna(99.00)
+del fastTextos, fastText10K
+gc.collect()
+
 
 print('[{}] Data types'.format(time.time() - start_time))
 train_df['qty'] = train_df['qty'].astype('uint16')
@@ -283,12 +291,17 @@ print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
+
+remove = ['ftdim3', 'ip_click_min_entropy', 'ftdim0', 'ftdim2' , 'ftdim4', 'ftdim1']
+
 lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
+lead_cols += [col for col in train_df.columns if 'ftdim' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
+lead_cols = [i for i in lead_cols if i not in remove]
 
 target = 'is_attributed'
 predictors =  lead_cols
@@ -308,7 +321,6 @@ else:
     val_df = test_df.sample(frac=0.025, replace=False, random_state=0)
     gc.collect()
 
-    
 print('[{}] Drop features complete'.format(time.time() - start_time))
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
@@ -398,30 +410,43 @@ Auc for all hours in testval : 0.9802027274200331
 Auc for select hours in testval : 0.9608878940255907
 '''
 
-#                     feat  imp
-#0                 channel_app  321
-#1                          os  141
-#2    click_sec_lead_split_sec  133
-#3                     channel  112
-#4                         qty   77
-#5                         app   69
-#6          click_sec_lead_app   52
-#7        ip_click_min_entropy   42
-#8                        hour   37
-#9                      device   27
-#10          ip_device_entropy   24
-#11         ip_channel_entropy   23
-#12        ip_click_hr_entropy   23
-#13              ip_os_entropy   21
-#14            ip_app_os_count   21
-#15             ip_app_entropy   20
-#16      click_sec_lead_shift2   14
-#17          click_sec_lag_app   11
-#18                         ip    8
-#19         click_sec_lead_chl    7
-#20               ip_app_count    6
-#21          click_sec_lead_os    4
-#22              same_next_app    3
-#23          click_sec_lag_chl    3
-#24  click_sec_lead_sameappchl    1
-#25              same_next_chl    0
+'''
+# With app dimensions
+Auc for all hours in testval : 0.9812343519227531
+Auc for select hours in testval : 0.9628225836620236
+'''
+
+
+#                         feat  imp
+#0                     channel  243
+#1                         app  216
+#2                          os  130
+#3    click_sec_lead_split_sec  124
+#4                         qty   71
+#5          click_sec_lead_app   53
+#6        ip_click_min_entropy   49
+#7                        hour   44
+#8               ip_os_entropy   30
+#9                      device   28
+#10             ip_app_entropy   26
+#11               ip_app_count   25
+#12          ip_device_entropy   25
+#13      unique_app_ipdevosmin   23
+#14         ip_channel_entropy   23
+#15        ip_click_hr_entropy   16
+#16      click_sec_lead_shift2   13
+#17          click_sec_lag_app   12
+#18         click_sec_lead_chl   11
+#19            ip_app_os_count    9
+#20           click_sec_lag_os    7
+#21                         ip    5
+#22              same_next_app    5
+#23          click_sec_lead_os    3
+#24                     ftdim3    3
+#25  click_sec_lead_sameappchl    2
+#26          click_sec_lag_chl    2
+#27                     ftdim0    1
+#28                     ftdim2    1
+#29                     ftdim4    0
+#30                     ftdim1    0
+#31              same_next_chl    0
