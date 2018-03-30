@@ -25,34 +25,24 @@ getchlDf = function(fname){
 
 trndf = getchlDf('train.csv')
 tstdf = getchlDf('testfull.csv')
+train_rows = nrow(trndf)
+alldf = rbind(trndf, tstdf)
+rm(trndf, tstdf)
+gc();gc()
+alldf[,index:=1:.N]
 
-# Write out the <ip, device, os, channel> level -- shift2
-keepcols_ = c("ip", "channel", "click_time", "is_attributed")
-cols_ = c("ip", "device", "os", "app")
-trndf = fread(paste0(path, 'train.csv'))[,keepcols_,with=F]
-gc()
-trndf[, click_time := fasttime::fastPOSIXct(click_time)]
-trndf[, click_hour := round((as.numeric(click_time))/3600)%%24]
-trndf[, click_day := round(as.numeric(click_time)/(3600*24)) - min(round(as.numeric(click_time)/(3600*24)))]
-trndf[, click_time := NULL];
-gc()
-trndf[,qty:=.N, by=.(ip, click_day, click_hour, channel)]
-trndf[,index:= 1:.N]
-
-aggdf = trndf[,.N, by=.(ip, channel, click_hour, click_day)]
+# Aggregate and get the quantity for the same hour on the prev day
+# Day 0 gets a -1, an dno occurrence in same hour prev day gets 0. 
+aggdf = alldf[,.N, by=.(ip, channel, click_hour, click_day)]
 aggdf = aggdf[order(ip, channel, click_hour, click_day)]
-aggdf[, `:=`(prevday_qty=shift(N, 1, type="lag"), 
-          click_day_prev=shift(click_day, 1, type="lag"),
-          click_hour_prev=shift(click_hour, 1, type="lag"),
-          channel_prev=shift(channel, 1, type="lag"),
-          ip_prev=shift(ip, 1, type="lag")) ]
-aggdf[(click_day_prev!=click_day-1), prevday_qty := 0]
-aggdf[(ip != ip_prev), prevday_qty := 0]
-aggdf[(channel != channel_prev), prevday_qty := 0]
-aggdf[(click_hour_prev != click_hour_prev), prevday_qty := 0]
-aggdf = aggdf[, .(ip, channel, click_hour, click_day, prevday_qty)]
+aggdf[, prevday_qty:=shift(N, 1, type="lag")] 
+aggdf[shift(click_day, 1, type="lag")!=click_day-1,   prevday_qty := 0]
+aggdf[ip != shift(ip, 1, type="lag"),                 prevday_qty := 0]
+aggdf[channel != shift(channel, 1, type="lag"),       prevday_qty := 0]
+aggdf[shift(click_hour, 1, type="lag") != click_hour, prevday_qty := 0]
+setnames(aggdf, "N", "qty")
 #View(aggdf[ip==5147 & channel == 280])
-trndf = merge(trndf, aggdf, by = c("ip", "channel", "click_hour", "click_day"), all.x=T, all.y=F)
+trndf = merge(alldf, aggdf, by = c("ip", "channel", "click_hour", "click_day"), all.x=T, all.y=F)
 rm(aggdf)
 gc();gc();gc();gc();gc();gc();gc();gc()
 trndf = trndf[order(index)]
