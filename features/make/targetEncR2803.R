@@ -8,13 +8,13 @@ library(Hmisc)
 
 
 path = '~/tdata/data/'
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
 
 source(paste0(path, '../features/make/utils.R'))
 
 # Write out the <ip, device, os> level
 make_alldf = function(type){
-  keepcols = c("ip", "os", "device", "is_attributed")
+  keepcols = c("ip", "os", "device", "app", "channel", "is_attributed")
   trndf = fread(paste0(path, 'train', type,'.csv'))
   trndf = trndf[,keepcols,with=F]
   trndf[,is_train:=1]
@@ -31,22 +31,23 @@ make_alldf = function(type){
 }
 
 
-#reponse encoding with leave-one-out and credibility adjustment
+# reponse encoding with leave-one-out and credibility adjustment
+
 alldf = make_alldf("val")
 base_ft <- alldf$is_train ==1
 mean_y0 = mean(alldf$is_attributed, na.rm = T)
-calc_exp2(alldf, base_ft, 'is_attributed', c('ip'), 'enc2_ip', k = 1000, mean_y0 = mean_y0, verbose=T)
-calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os'), 'enc2_ipdevos', k = 500, mean_y0 = mean_y0, verbose=T)
-writeme(alldf[is_train==1, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_trnval" )
-writeme(alldf[is_train==0, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_tstval" )
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os', 'app'), 'enc2_ipdevosapp', k = 500, mean_y0 = mean_y0, verbose=T)
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os', 'channel'), 'enc2_ipdevoschl', k = 500, mean_y0 = mean_y0, verbose=T)
+writeme(alldf[is_train==1, .(enc2_ipdevosapp, enc2_ipdevoschl)] , "enc_ipdevos_trnval" )
+writeme(alldf[is_train==0, .(enc2_ipdevosapp, enc2_ipdevoschl)] , "enc_ipdevos_tstval" )
 
 
 alldf = make_alldf("")
 base_ft <- alldf$is_train ==1
 mean_y0 = mean(alldf$is_attributed, na.rm = T)
-calc_exp2(alldf, base_ft, 'is_attributed', c('ip'), 'enc2_ip', k = 1000, mean_y0 = mean_y0, verbose=T)
-calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os'), 'enc2_ipdevos', k = 500, mean_y0 = mean_y0, verbose=T)
-writeme(alldf[is_train==1, .(enc2_ip, enc2_ipdevos)] , "enc_ipdevos_trn" )
-writeme(alldf[is_train==0, .(een2_ip, enc2_ipdevos)] , "enc_ipdevos_tst" )
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os', 'app'), 'enc2_ipdevosapp', k = 500, mean_y0 = mean_y0, verbose=T)
+calc_exp2(alldf, base_ft, 'is_attributed', c('ip', 'device', 'os', 'channel'), 'enc2_ipdevoschl', k = 500, mean_y0 = mean_y0, verbose=T)
+writeme(alldf[is_train==1, .(enc2_ipdevosapp, enc2_ipdevoschl)] , "enc_ipdevos_trn" )
+writeme(alldf[is_train==0, .(enc2_ipdevosapp, enc2_ipdevoschl)] , "enc_ipdevos_tst" )
 
 

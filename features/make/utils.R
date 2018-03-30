@@ -9,6 +9,24 @@ writeme = function(df, name){
             row.names = F, quote = F)
 }
 
+getSplitLead2 = function(df, cols_, fname, path, shift_n = 1){
+  df$click_sec = as.numeric(fasttime::fastPOSIXct(df$click_time))
+  df[, split_sec := round((0:(.N-1))/.N, 4), by = click_time]
+  df = df[,c(cols_, "click_sec", "split_sec"), with = F]
+  df[, index := 1:nrow(df)]
+  setorderv(df, c(cols_, "click_sec", "split_sec"))
+  df[,click_sec_shift_lead := shift(click_sec+split_sec, shift_n, type = "lead")]
+  df[,seq_lead := .N:1, by = cols_ ]
+  df[,click_sec_lead := click_sec_shift_lead - (click_sec + split_sec)]
+  df[,click_sec_lead := round(click_sec_lead, 4)]
+  df[seq_lead %in% 1:shift_n, click_sec_lead := 999999]
+  setorderv(df, "index")
+  new_name = paste0("click_sec_lead_split_sec_", fname)
+  setnames(df, "click_sec_lead", new_name)
+  df = df[,new_name,with=F]
+  return(df)
+}
+
 #response encoder for categorical features, with credibility adjustment and leave-one-out
 calc_exp2 <- function(dt, ft, vn_y, by, tgt_vn, k, mean_y0=NULL, verbose=F) {
   dt[, tmp_y := dt[[vn_y]]]
