@@ -316,70 +316,68 @@ print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
+print('[{}] Training...'.format(time.time() - start_time))
+params = {
+    'learning_rate': 0.1,
+    #'is_unbalance': 'true', # replaced with scale_pos_weight argument
+    'num_leaves': 7,  # we should let it be smaller than 2^(max_depth)
+    'max_depth': 3,  # -1 means no limit
+    'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
+    'max_bin': 100,  # Number of bucketed bin for feature values
+    'subsample': 0.7,  # Subsample ratio of the training instance.
+    'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
+    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
+    'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
+    'scale_pos_weight':99 # because training data is extremely unbalanced 
+}
 
-for d in [3,4,5]:
-    for n_leaves in [7,10,15]:
-        print('[{}] Training... depth {}, leaves {}'.format(time.time() - start_time, d, n_leaves))
-        params = {
-            'learning_rate': 0.1,
-            #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-            'num_leaves': n_leaves,#7,  # we should let it be smaller than 2^(max_depth)
-            'max_depth': d,#3,  # -1 means no limit
-            'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-            'max_bin': 100,  # Number of bucketed bin for feature values
-            'subsample': 0.7,  # Subsample ratio of the training instance.
-            'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-            'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
-            'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-            'scale_pos_weight':99 # because training data is extremely unbalanced 
-        }
-        
-        
-        bst = lgb_modelfit_nocv(params, 
-                                train_df, 
-                                val_df, 
-                                predictors, 
-                                target, 
-                                objective='binary', 
-                                metrics='auc',
-                                early_stopping_rounds=early_stop, 
-                                verbose_eval=True, 
-                                num_boost_round=ntrees, 
-                                categorical_features=categorical)
 
-    #[20]    train's auc: 0.973749   valid's auc: 0.969085
-    #[50]    train's auc: 0.980581   valid's auc: 0.975329
-    #[100]   train's auc: 0.984159   valid's auc: 0.979585
-    #[150]   train's auc: 0.985282   valid's auc: 0.980771
-    #[200]   train's auc: 0.986022   valid's auc: 0.981313
-    
-    
-    gc.collect()
-    imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
-    imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
-    print(imp)
-    
-    if not validation:
-        print("Predicting...")
-        sub['is_attributed'] = bst.predict(test_df[predictors])
-        print("writing...")
-        sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
-        print("done...")
-        print(sub.info())
-    else:
-        max_ip = 126413
-        preds =   bst.predict(test_df[predictors])
-        fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-        print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-        idx = test_df['ip']<=max_ip
-        fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-        print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+bst = lgb_modelfit_nocv(params, 
+                        train_df, 
+                        val_df, 
+                        predictors, 
+                        target, 
+                        objective='binary', 
+                        metrics='auc',
+                        early_stopping_rounds=early_stop, 
+                        verbose_eval=True, 
+                        num_boost_round=ntrees, 
+                        categorical_features=categorical)
+
+
+#[20]    train's auc: 0.973417   valid's auc: 0.968818
+#[50]    train's auc: 0.9805     valid's auc: 0.975818
+#[100]   train's auc: 0.984012   valid's auc: 0.979628
+#[150]   train's auc: 0.985237   valid's auc: 0.980971
+#[200]   train's auc: 0.985966   valid's auc: 0.981573
+
+
+gc.collect()
+imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
+imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
+print(imp)
+
+if not validation:
+    print("Predicting...")
+    sub['is_attributed'] = bst.predict(test_df[predictors])
+    print("writing...")
+    sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
+    print("done...")
+    print(sub.info())
+else:
+    max_ip = 126413
+    preds =   bst.predict(test_df[predictors])
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    idx = test_df['ip']<=max_ip
+    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
 
 
 '''
 # yesterday's counts
-Auc for all hours in testval : 0.9814525641122481
-Auc for select hours in testval : 0.9633034562183045
+Auc for all hours in testval : 0.9814728229902597
+Auc for select hours in testval : 0.9633564861135612
 '''
 
 '''
@@ -411,32 +409,66 @@ Auc for select hours in testval : 0.9608878940255907
 '''
 
 #                         feat  imp
-#0                     channel  256
-#1                         app  224
-#2                          os  131
-#3    click_sec_lead_split_sec  127
-#4          click_sec_lead_app   50
-#5                        hour   42
-#6                     qty_chl   38
-#7                         qty   36
-#8        ip_click_min_entropy   34
-#9               ip_os_entropy   30
-#10                     device   27
-#11          ip_device_entropy   26
-#12             ip_app_entropy   24
-#13                prevday_qty   19
-#14        ip_click_hr_entropy   19
-#15         ip_channel_entropy   19
-#16      unique_app_ipdevosmin   18
-#17      click_sec_lead_shift2   14
-#18          click_sec_lag_app   14
-#19            ip_app_os_count   11
-#20               ip_app_count   11
-#21         click_sec_lead_chl    9
-#22          click_sec_lead_os    7
-#23                         ip    5
-#24           click_sec_lag_os    5
-#25  click_sec_lead_sameappchl    2
-#26              same_next_app    1
+#0                     channel  234
+#1                         app  229
+#2                          os  136
+#3    click_sec_lead_split_sec  128
+#4          click_sec_lead_app   45
+#5                        hour   39
+#6                     qty_chl   33
+#7        ip_click_min_entropy   32
+#8           ip_device_entropy   31
+#9                      device   30
+#10              ip_os_entropy   30
+#11                        qty   27
+#12             ip_app_entropy   26
+#13         ip_channel_entropy   21
+#14               ip_app_count   20
+#15        ip_click_hr_entropy   17
+#16                prevday_qty   16
+#17            ip_app_os_count   16
+#18      unique_app_ipdevosmin   16
+#19               prevhour_qty   14
+#20      click_sec_lead_shift2   14
+#21          click_sec_lag_app   14
+#22         click_sec_lead_chl    9
+#23                         ip    7
+#24           click_sec_lag_os    6
+#25              same_next_app    5
+#26          click_sec_lead_os    3
 #27          click_sec_lag_chl    1
-#28              same_next_chl    0
+#28  click_sec_lead_sameappchl    1
+#29              same_next_chl    0
+
+
+bst = lgb_modelfit_nocv(params, 
+                        train_df, 
+                        val_df, 
+                        predictors, 
+                        target, 
+                        objective='binary', 
+                        metrics='auc',
+                        early_stopping_rounds=early_stop, 
+                        verbose_eval=True, 
+                        num_boost_round=ntrees+1000, 
+                        categorical_features=categorical)
+
+
+if not validation:
+    print("Predicting...")
+    sub['is_attributed'] = bst.predict(test_df[predictors])
+    print("writing...")
+    sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
+    print("done...")
+    print(sub.info())
+else:
+    max_ip = 126413
+    preds =   bst.predict(test_df[predictors])
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    idx = test_df['ip']<=max_ip
+    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+    idx = test_df['hour']==4.0
+    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+    print('Auc for first hour in testval : %s'%(metrics.auc(fpr1, tpr1)))
