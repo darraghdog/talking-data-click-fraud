@@ -1,5 +1,6 @@
 Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
 __________________________________________________________________________________________________________________
+lgb_cts_3003B.py           Add counts from prev days      200	   750        0.981473              0.9808
 lgb_cts_2703B.py           Shift 2 and split click sec    200      800        0.981352   0.96315    0.9806
 lgb_cts_2503D.py           Adding lead time per app click 200      500        0.980202   0.96088    0.9799
 lgb_cts_2503baseline.py    Adding entropy                 200      ?          0.974848   0.95003    0.9743
