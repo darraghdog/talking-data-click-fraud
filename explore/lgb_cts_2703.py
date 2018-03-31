@@ -66,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -88,7 +88,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 if validation:
     add_ = 'val'
     ntrees = 200
@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 500
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''

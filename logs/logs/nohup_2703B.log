@@ -1,0 +1,220 @@
+nohup: ignoring input
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/sklearn/cross_validation.py:41: DeprecationWarning: This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module will be removed in 0.20.
+  "This module will be removed in 0.20.", DeprecationWarning)
+[8.106231689453125e-06] Load Train
+[109.46268343925476] Load Test
+[121.4858705997467] Load Features
+[378.5146632194519] Finished Loading Features, start concatenate
+Feat train/test shape...
+(184903890, 11)
+(18790469, 11)
+Train/test shape...
+(184903890, 7)
+(18790469, 7)
+[436.3865349292755] Concat Train/Test
+(184903890, 22)
+(18790469, 22)
+[458.212605714798] Time prep
+[643.4048597812653] group by...unique app per ip/dev/os
+merge...
+[937.6874160766602] group by...count app per ip/dev/os/min
+merge...
+[1273.2839612960815] group by...unique app per ip/day/hr/chl
+merge...
+[1440.7899720668793] group by...unique app per ip/app/chl
+[1629.3687252998352] group by...unique app per ip/app/os/chl
+[1940.184211730957] Add entropy
+[2030.3654687404633] Data types
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 203694359 entries, 0 to 203694358
+Data columns (total 35 columns):
+app                          uint16
+channel                      uint16
+click_id                     float64
+click_sec_lag_app            int32
+click_sec_lag_chl            int32
+click_sec_lag_os             int32
+click_sec_lead_app           int32
+click_sec_lead_chl           int32
+click_sec_lead_os            int32
+click_sec_lead_sameappchl    int32
+click_sec_lead_shift2        int32
+click_sec_lead_split_sec     float32
+click_sec_lsum_chl           int32
+click_sec_lsum_os            int32
+device                       uint16
+ip                           uint32
+is_attributed                float64
+os                           uint16
+same_next_app                int8
+same_next_chl                int8
+same_prev_app                int8
+same_prev_chl                int8
+hour                         uint8
+minute                       uint8
+unique_app_ipdevosmin        int64
+qty                          uint16
+ip_app_count                 uint16
+ip_app_os_count              uint16
+ip_device_entropy            float32
+ip_os_entropy.x              float32
+ip_app_entropy               float32
+ip_channel_entropy           float32
+ip_click_hr_entropy          float32
+ip_click_min_entropy         float32
+ip_os_entropy.y              float32
+dtypes: float32(8), float64(2), int32(10), int64(1), int8(4), uint16(7), uint32(1), uint8(2)
+memory usage: 24.3 GB
+(203694359, 35)
+[2066.1636328697205] Get common train and test
+Get common to train and test : app
+Get common to train and test : channel
+Get common to train and test : os
+Get common to train and test : hour
+Get common to train and test : device
+[2382.398329257965] Data split complete
+train size:  184893890
+valid size:  10000
+test size :  18790469
+**************************************************
+['qty', 'ip_app_os_count', 'hour', 'click_sec_lead_shift2', 'click_sec_lead_chl', 'ip_click_min_entropy', 'ip_channel_entropy', 'ip_app_count', 'channel', 'click_sec_lead_os', 'unique_app_ipdevosmin', 'click_sec_lead_app', 'ip_os_entropy.y', 'click_sec_lag_chl', 'app', 'click_sec_lead_sameappchl', 'ip_click_hr_entropy', 'click_sec_lag_app', 'same_next_app', 'same_next_chl', 'ip_device_entropy', 'device', 'click_sec_lag_os', 'os', 'click_sec_lead_split_sec', 'ip_os_entropy.x', 'ip_app_entropy', 'ip']
+**************************************************
+['app', 'device', 'os', 'channel', 'hour']
+**************************************************
+[2403.0095229148865] Drop features complete
+train size:  184893890
+valid size:  10000
+test size :  18790469
+[2403.0096049308777] Training...
+preparing validation datasets
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/lightgbm/basic.py:1036: UserWarning: Using categorical_feature in Dataset.
+  warnings.warn('Using categorical_feature in Dataset.')
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/lightgbm/basic.py:681: UserWarning: categorical_feature in param dict is overrided.
+  warnings.warn('categorical_feature in param dict is overrided.')
+Training until validation scores don't improve for 800 rounds.
+[10]	train's auc: 0.965043	valid's auc: 1
+[20]	train's auc: 0.970773	valid's auc: 1
+[30]	train's auc: 0.973047	valid's auc: 1
+[40]	train's auc: 0.976449	valid's auc: 1
+[50]	train's auc: 0.977987	valid's auc: 1
+[60]	train's auc: 0.979278	valid's auc: 1
+[70]	train's auc: 0.98012	valid's auc: 1
+[80]	train's auc: 0.980818	valid's auc: 1
+[90]	train's auc: 0.981282	valid's auc: 1
+[100]	train's auc: 0.981579	valid's auc: 1
+[110]	train's auc: 0.982026	valid's auc: 1
+[120]	train's auc: 0.982253	valid's auc: 1
+[130]	train's auc: 0.982448	valid's auc: 1
+[140]	train's auc: 0.982662	valid's auc: 1
+[150]	train's auc: 0.982845	valid's auc: 1
+[160]	train's auc: 0.983017	valid's auc: 1
+[170]	train's auc: 0.983176	valid's auc: 1
+[180]	train's auc: 0.983301	valid's auc: 1
+[190]	train's auc: 0.98342	valid's auc: 1
+[200]	train's auc: 0.983535	valid's auc: 1
+[210]	train's auc: 0.983647	valid's auc: 1
+[220]	train's auc: 0.983748	valid's auc: 1
+[230]	train's auc: 0.983836	valid's auc: 1
+[240]	train's auc: 0.983941	valid's auc: 1
+[250]	train's auc: 0.984029	valid's auc: 1
+[260]	train's auc: 0.984106	valid's auc: 1
+[270]	train's auc: 0.984162	valid's auc: 1
+[280]	train's auc: 0.984234	valid's auc: 1
+[290]	train's auc: 0.984311	valid's auc: 1
+[300]	train's auc: 0.984388	valid's auc: 1
+[310]	train's auc: 0.98446	valid's auc: 1
+[320]	train's auc: 0.984506	valid's auc: 1
+[330]	train's auc: 0.984563	valid's auc: 1
+[340]	train's auc: 0.984616	valid's auc: 1
+[350]	train's auc: 0.98466	valid's auc: 1
+[360]	train's auc: 0.984726	valid's auc: 1
+[370]	train's auc: 0.984785	valid's auc: 1
+[380]	train's auc: 0.984833	valid's auc: 1
+[390]	train's auc: 0.98487	valid's auc: 1
+[400]	train's auc: 0.98491	valid's auc: 1
+[410]	train's auc: 0.984964	valid's auc: 1
+[420]	train's auc: 0.98501	valid's auc: 1
+[430]	train's auc: 0.98505	valid's auc: 1
+[440]	train's auc: 0.98507	valid's auc: 1
+[450]	train's auc: 0.985104	valid's auc: 1
+[460]	train's auc: 0.985124	valid's auc: 1
+[470]	train's auc: 0.985153	valid's auc: 1
+[480]	train's auc: 0.985188	valid's auc: 1
+[490]	train's auc: 0.985211	valid's auc: 1
+[500]	train's auc: 0.985238	valid's auc: 1
+[510]	train's auc: 0.985274	valid's auc: 1
+[520]	train's auc: 0.985305	valid's auc: 1
+[530]	train's auc: 0.985336	valid's auc: 1
+[540]	train's auc: 0.98536	valid's auc: 1
+[550]	train's auc: 0.985393	valid's auc: 1
+[560]	train's auc: 0.98542	valid's auc: 1
+[570]	train's auc: 0.985441	valid's auc: 1
+[580]	train's auc: 0.985464	valid's auc: 1
+[590]	train's auc: 0.985484	valid's auc: 1
+[600]	train's auc: 0.98551	valid's auc: 1
+[610]	train's auc: 0.985533	valid's auc: 1
+[620]	train's auc: 0.985559	valid's auc: 1
+[630]	train's auc: 0.985578	valid's auc: 1
+[640]	train's auc: 0.985597	valid's auc: 1
+[650]	train's auc: 0.985613	valid's auc: 1
+[660]	train's auc: 0.985632	valid's auc: 1
+[670]	train's auc: 0.985647	valid's auc: 1
+[680]	train's auc: 0.985669	valid's auc: 1
+[690]	train's auc: 0.985683	valid's auc: 1
+[700]	train's auc: 0.985707	valid's auc: 1
+[710]	train's auc: 0.985723	valid's auc: 1
+[720]	train's auc: 0.98574	valid's auc: 1
+[730]	train's auc: 0.985754	valid's auc: 1
+[740]	train's auc: 0.985775	valid's auc: 1
+[750]	train's auc: 0.985792	valid's auc: 1
+[760]	train's auc: 0.98581	valid's auc: 1
+[770]	train's auc: 0.985821	valid's auc: 1
+[780]	train's auc: 0.985833	valid's auc: 1
+[790]	train's auc: 0.985845	valid's auc: 1
+[800]	train's auc: 0.985863	valid's auc: 1
+Did not meet early stopping. Best iteration is:
+[800]	train's auc: 0.985863	valid's auc: 1
+
+Model Report
+n_estimators :  800
+auc: 1.0
+                         feat  imp
+0                     channel  946
+1                         app  898
+2                          os  577
+3    click_sec_lead_split_sec  326
+4                         qty  252
+5                ip_app_count  183
+6                        hour  170
+7             ip_os_entropy.y  122
+8       unique_app_ipdevosmin  121
+9        ip_click_min_entropy  114
+10          ip_device_entropy  114
+11         click_sec_lead_app  111
+12         ip_channel_entropy  110
+13             ip_app_entropy  106
+14      click_sec_lead_shift2   92
+15                     device   75
+16          click_sec_lag_app   73
+17            ip_app_os_count   71
+18        ip_click_hr_entropy   70
+19                         ip   69
+20          click_sec_lead_os   55
+21           click_sec_lag_os   42
+22            ip_os_entropy.x   35
+23              same_next_app   18
+24         click_sec_lead_chl   18
+25              same_next_chl   14
+26          click_sec_lag_chl   13
+27  click_sec_lead_sameappchl    5
+Predicting...
+writing...
+done...
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 18790469 entries, 184903890 to 203694358
+Data columns (total 2 columns):
+click_id         int64
+is_attributed    float64
+dtypes: float64(1), int64(1)
+memory usage: 430.1 MB
+None

@@ -66,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -88,7 +88,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 if validation:
     add_ = 'val'
     ntrees = 200
@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 500
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -171,6 +171,11 @@ gc.collect()
 #feattst.hist()
 
 
+print('Feat train/test shape...')
+print(feattrn.shape)
+print(feattst.shape)
+
+print('Train/test shape...')
 print(train_df.shape)
 print(test_df.shape)
 
@@ -244,7 +249,7 @@ train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['click_sec_lead_shift2'] = train_df['click_sec_lead_shift2'].astype('int32')
-train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
+#train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 train_df.drop(['day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
 train_df.info()
 gc.collect()
@@ -258,7 +263,7 @@ train_df = train_df[:(len_train-val_size)]
 gc.collect()
 
 print('[{}] Get common train and test'.format(time.time() - start_time))
-for col in ['app', 'channel', 'channel_app', 'os', 'hour', 'device']:  
+for col in ['app', 'channel', 'os', 'hour', 'device']:  
     gc.collect()
     print('Get common to train and test : %s'%(col))
     common = pd.Series(list(set(train_df[col]) & set(test_df[col])))
@@ -267,7 +272,7 @@ for col in ['app', 'channel', 'channel_app', 'os', 'hour', 'device']:
     val_df  [col][~val_df[col].isin(common)] = np.nan
     del common
     gc.collect()
-for col in ['app', 'channel', 'channel_app', 'os', 'hour', 'device']:
+for col in ['app', 'channel', 'os', 'hour', 'device']:
     train_df[col] = train_df[col].astype(np.float32)
     test_df [col] = test_df[col].astype(np.float32)
     val_df  [col] = val_df[col].astype(np.float32)

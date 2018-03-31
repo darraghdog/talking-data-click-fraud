@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 750
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -106,6 +106,18 @@ print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
+
+print('[{}] Time prep'.format(time.time() - start_time))
+def get_time(_df):
+        _df['hour'] = pd.to_datetime(_df.click_time).dt.hour.astype('uint16')
+        _df['day'] = pd.to_datetime(_df.click_time).dt.day.astype('uint16')
+        _df['minute'] = pd.to_datetime(_df.click_time).dt.minute.astype('uint16')
+        gc.collect()
+        return _df
+train_df = get_time(train_df)
+test_df  = get_time(test_df)
+
+print(train_df.head())
 
 print('[{}] Load Features'.format(time.time() - start_time))
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
@@ -122,16 +134,6 @@ feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
-# feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip').astype(np.int32)
-# feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip').astype(np.int32)
-
-feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip')#.astype(np.int32)
-feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip')#.astype(np.int32)
-feattstprev.fillna(-1, inplace = True)
-feattrnprev = feattrnprev.astype(np.int32)
-feattstprev = feattstprev.astype(np.int32)
-
-
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
@@ -186,9 +188,9 @@ print(test_df.shape)
 
 
 print('[{}] Concat Train/Test'.format(time.time() - start_time))
-train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev], axis=1)
-test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev], axis=1)
-del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev
+train_df = pd.concat([train_df, feattrn, feattrnnext], axis=1)
+test_df  = pd.concat([test_df , feattst, feattstnext], axis=1)
+del feattrn, feattst, feattrnnext, feattstnext
 gc.collect()
 
 
@@ -201,12 +203,15 @@ train_df=train_df.append(test_df)
 del test_df
 gc.collect()
 
-print('[{}] Time prep'.format(time.time() - start_time))
-train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
-train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
-train_df['minute'] = pd.to_datetime(train_df.click_time).dt.minute.astype('uint8')
-gc.collect()
+print(train_df.shape)
+print(train_df.head(5))
 
+
+#print('[{}] Time prep'.format(time.time() - start_time))
+#train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint16')
+#train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint16')
+#train_df['minute'] = pd.to_datetime(train_df.click_time).dt.minute.astype('uint16')
+#gc.collect()
 
 print('[{}] group by...unique app per ip/dev/os'.format(time.time() - start_time))
 gp = train_df[['device', 'ip', 'os', 'app']].groupby(by=['device', 'ip', 'os'])[['app']].nunique().reset_index().rename(index=str, columns={'app': 'unique_app_ipdevos'})
@@ -224,12 +229,11 @@ del gp
 gc.collect()
 
 print('[{}] group by...unique app per ip/day/hr/chl'.format(time.time() - start_time))
-gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty_chl'})
+gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
 print('merge...')
 train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
 del gp
 gc.collect()
-
 
 print('[{}] group by...unique app per ip/app/chl'.format(time.time() - start_time))
 gp = train_df[['ip','app', 'channel']].groupby(by=['ip', 'app'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'ip_app_count'})
@@ -255,7 +259,7 @@ train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['click_sec_lead_shift2'] = train_df['click_sec_lead_shift2'].astype('int32')
-train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
+# train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 train_df.drop(['day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
 train_df.info()
 gc.collect()
@@ -295,13 +299,12 @@ lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
-lead_cols += [col for col in train_df.columns if 'qty' in col]
-lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
+lead_cols += [ 'ip', 'app','device','os', 'channel', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
 
 target = 'is_attributed'
 predictors =  lead_cols
-categorical = [ 'app','device','os', 'channel', 'hour'] #'channel_app',
+categorical = [ 'app','device','os', 'channel', 'hour']
 print(50*'*')
 print(predictors)
 print(50*'*')
@@ -351,12 +354,13 @@ bst = lgb_modelfit_nocv(params,
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
 
+# [50]    train's auc: 0.979403   valid's auc: 0.974265
+#[100]   train's auc: 0.983698   valid's auc: 0.978772
+#[200]   train's auc: 0.985962   valid's auc: 0.981068
 
-#[20]    train's auc: 0.973417   valid's auc: 0.968818
-#[50]    train's auc: 0.9805     valid's auc: 0.975818
-#[100]   train's auc: 0.984012   valid's auc: 0.979628
-#[150]   train's auc: 0.985237   valid's auc: 0.980971
-#[200]   train's auc: 0.985966   valid's auc: 0.981573
+# [50]    train's auc: 0.980588   valid's auc: 0.975761
+# [100]   train's auc: 0.984389   valid's auc: 0.979814
+# [200]   train's auc: 0.986348   valid's auc: 0.981456
 
 
 gc.collect()
@@ -368,7 +372,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb3003B.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb2703A.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -379,19 +383,6 @@ else:
     idx = test_df['ip']<=max_ip
     fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-
-
-'''
-# yesterday's counts
-Auc for all hours in testval : 0.9814728229902597
-Auc for select hours in testval : 0.9633564861135612
-'''
-
-'''
-Without channel app
-Auc for all hours in testval : 0.98135282046753
-Auc for select hours in testval : 0.9631544908471926
-'''
 
 '''
 Auc for all hours in testval : 0.9810998331513668
@@ -415,67 +406,30 @@ Auc for all hours in testval : 0.9802027274200331
 Auc for select hours in testval : 0.9608878940255907
 '''
 
-#                         feat  imp
-#0                     channel  234
-#1                         app  229
-#2                          os  136
-#3    click_sec_lead_split_sec  128
-#4          click_sec_lead_app   45
-#5                        hour   39
-#6                     qty_chl   33
-#7        ip_click_min_entropy   32
-#8           ip_device_entropy   31
-#9                      device   30
-#10              ip_os_entropy   30
-#11                        qty   27
-#12             ip_app_entropy   26
-#13         ip_channel_entropy   21
-#14               ip_app_count   20
-#15        ip_click_hr_entropy   17
-#16                prevday_qty   16
-#17            ip_app_os_count   16
-#18      unique_app_ipdevosmin   16
-#19               prevhour_qty   14
-#20      click_sec_lead_shift2   14
-#21          click_sec_lag_app   14
-#22         click_sec_lead_chl    9
-#23                         ip    7
-#24           click_sec_lag_os    6
-#25              same_next_app    5
-#26          click_sec_lead_os    3
-#27          click_sec_lag_chl    1
-#28  click_sec_lead_sameappchl    1
-#29              same_next_chl    0
-
-
-bst = lgb_modelfit_nocv(params, 
-                        train_df, 
-                        val_df, 
-                        predictors, 
-                        target, 
-                        objective='binary', 
-                        metrics='auc',
-                        early_stopping_rounds=early_stop, 
-                        verbose_eval=True, 
-                        num_boost_round=ntrees+1000, 
-                        categorical_features=categorical)
-
-
-if not validation:
-    print("Predicting...")
-    sub['is_attributed'] = bst.predict(test_df[predictors])
-    print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2703.csv.gz',index=False, compression = 'gzip')
-    print("done...")
-    print(sub.info())
-else:
-    max_ip = 126413
-    preds =   bst.predict(test_df[predictors])
-    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-    idx = test_df['ip']<=max_ip
-    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-    idx = test_df['hour']==4.0
-    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-    print('Auc for first hour in testval : %s'%(metrics.auc(fpr1, tpr1)))
+#                     feat  imp
+#0                 channel_app  321
+#1                          os  141
+#2    click_sec_lead_split_sec  133
+#3                     channel  112
+#4                         qty   77
+#5                         app   69
+#6          click_sec_lead_app   52
+#7        ip_click_min_entropy   42
+#8                        hour   37
+#9                      device   27
+#10          ip_device_entropy   24
+#11         ip_channel_entropy   23
+#12        ip_click_hr_entropy   23
+#13              ip_os_entropy   21
+#14            ip_app_os_count   21
+#15             ip_app_entropy   20
+#16      click_sec_lead_shift2   14
+#17          click_sec_lag_app   11
+#18                         ip    8
+#19         click_sec_lead_chl    7
+#20               ip_app_count    6
+#21          click_sec_lead_os    4
+#22              same_next_app    3
+#23          click_sec_lag_chl    3
+#24  click_sec_lead_sameappchl    1
+#25              same_next_chl    0
