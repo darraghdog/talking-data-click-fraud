@@ -391,6 +391,12 @@ Auc for select hours in testval : 0.9634111249801599
 '''
 
 '''
+# With hours in test
+Auc for all hours in testval : 0.981486237779168
+Auc for select hours in testval : 0.9634329450615521
+'''
+
+'''
 # yesterday's counts
 Auc for all hours in testval : 0.9814728229902597
 Auc for select hours in testval : 0.9633564861135612
@@ -457,3 +463,41 @@ Auc for select hours in testval : 0.9608878940255907
 #29              same_next_app    2
 #30  click_sec_lead_sameappchl    1
 #31              same_next_chl    0
+
+
+#                         feat  imp
+#0                     channel  267
+#1                         app  211
+#2                          os  134
+#3    click_sec_lead_split_sec  120
+#4                  ctr_hh_dev   50
+#5          click_sec_lead_app   48
+#6               ip_os_entropy   36
+#7                        hour   36
+#8        ip_click_min_entropy   25
+#9              ip_app_entropy   24
+#10                     device   23
+#11         ip_channel_entropy   22
+#12                    qty_chl   22
+#13          ip_device_entropy   21
+#14        ip_click_hr_entropy   18
+#15                        qty   18
+#16      unique_app_ipdevosmin   17
+#17      click_sec_lead_shift2   14
+#18               ip_app_count   13
+#19          click_sec_lag_app   13
+#20     iphr_click_min_entropy   12
+#21            ip_app_os_count    8
+#22          click_sec_lead_os    6
+#23        iphr_device_entropy    5
+#24                         ip    5
+#25         click_sec_lead_chl    5
+#26           click_sec_lag_os    5
+#27            ctr_in_test_dev    5
+#28                prevday_qty    4
+#29               prevhour_qty    4
+#30          click_sec_lag_chl    3
+#31             ctr_in_test_hh    3
+#32              same_next_app    2
+#33  click_sec_lead_sameappchl    1
+#34              same_next_chl    0
