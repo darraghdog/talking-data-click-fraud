@@ -9,8 +9,10 @@ library(Hmisc)
 path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
-sub1 = fread(paste0(path, '../sub/sub_lgb2703.csv'))
+sub1 = fread(paste0(path, '../sub/sub_lgb3003C.csv'))
 sub2 = fread(paste0(path, '../sub/sub_lgb3003B.csv'))
+sub1
+sub2
 sub1 = sub1[order(is_attributed)]
 sub2 = sub2[order(is_attributed)]
 sub1[,bag := (1:nrow(sub1))/nrow(sub1)]

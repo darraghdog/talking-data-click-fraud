@@ -135,7 +135,8 @@ featentiphr  = pd.read_csv(path+'../features/entropyiphr.gz', compression = 'gzi
 featentiphr.iloc[:,2:] = featentiphr.iloc[:,2:].astype(np.float32)
 featentiphr.iloc[:,[0,1]] = featentiphr.iloc[:,[0,1]].astype('uint32')
 featentiphr.rename(columns={'click_hr': 'hour'}, inplace = True)
-
+feattrnctr  = pd.read_csv(path+'../features/ctr_test_hours_trn%s.gz'%(add_), compression = 'gzip').astype(np.uint32)
+feattstctr  = pd.read_csv(path+'../features/ctr_test_hours_tst%s.gz'%(add_), compression = 'gzip').astype(np.uint32)
 
 
 print('[{}] Finished Loading Features, start concatenate'.format(time.time() - start_time))
@@ -187,9 +188,9 @@ print(test_df.shape)
 
 
 print('[{}] Concat Train/Test'.format(time.time() - start_time))
-train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev], axis=1)
-test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev], axis=1)
-del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev
+train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev, feattrnctr], axis=1)
+test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev, feattstctr], axis=1)
+del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev, feattrnctr, feattstctr
 gc.collect()
 
 
@@ -298,6 +299,7 @@ lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
+lead_cols += [col for col in train_df.columns if 'ctr_' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
 
