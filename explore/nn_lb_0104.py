@@ -87,10 +87,9 @@ print ('final part of preparation....')
 test_df = train_df[len_train:]
 train_df = train_df[:len_train]
 y_train = train_df['is_attributed'].values
-train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
+train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
 print ('neural network....')
-
 max_app = np.max([train_df['app'].max(), test_df['app'].max()])+1
 max_ch = np.max([train_df['channel'].max(), test_df['channel'].max()])+1
 max_dev = np.max([train_df['device'].max(), test_df['device'].max()])+1
@@ -163,8 +162,12 @@ model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accu
 model.summary()
 
 class_weight = {0:.01,1:.99} # magic
-model.fit(train_df, y_train, batch_size=batch_size, epochs=2, class_weight=class_weight, shuffle=True, verbose=2)
-del train_df, y_train; gc.collect()
+model.fit(train_df, y_train, 
+          batch_size=batch_size, 
+          epochs=2, 
+          class_weight=class_weight, 
+          shuffle=True, verbose=1)
+#del train_df, y_train; gc.collect()
 model.save_weights('../weights/imbalanced_data.h5')
 
 sub = pd.DataFrame()
