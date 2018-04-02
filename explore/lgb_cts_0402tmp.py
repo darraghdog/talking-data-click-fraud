@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 780
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -128,7 +128,7 @@ feattstprev.fillna(-1, inplace = True)
 feattrnprev = feattrnprev.astype(np.int32)
 feattstprev = feattstprev.astype(np.int32)
 feattrnprv2  = pd.read_csv(path+'../features/prev_hday_clicks_trn%s.gz'%(add_), compression = 'gzip').astype(np.int16)
-feattstprv2  = pd.read_csv(path+'../features/prev_hday_clicks_tst%s.gz'%(add_), compression = 'gzip').astype(np.int16)
+feattstprv2  = pd.read_csv(path+'../features/prev_hday_clicks_tst%s.gz'%(add_), compression = 'gzip').astype(np.int15)
 
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
@@ -356,12 +356,6 @@ bst = lgb_modelfit_nocv(params,
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
 
-#[10]    train's auc: 0.96882    valid's auc: 0.964268
-#[20]    train's auc: 0.975323   valid's auc: 0.969386
-#[50]    train's auc: 0.980742   valid's auc: 0.97619
-#[100]   train's auc: 0.984239   valid's auc: 0.97993
-#[150]   train's auc: 0.98537    valid's auc: 0.980772
-#[200]   train's auc: 0.986157   valid's auc: 0.98145
 
 #[20]    train's auc: 0.973417   valid's auc: 0.968818
 #[50]    train's auc: 0.9805     valid's auc: 0.975818
@@ -390,14 +384,6 @@ else:
     idx = test_df['ip']<=max_ip
     fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-    print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb0204val.csv.gz',index=False, compression = 'gzip')
-    
-'''
-# Adding hour entropy
-Auc for all hours in testval : 0.9816845298783955
-Auc for select hours in testval : 0.9638276401595437
-'''
 
 '''
 # Adding hour entropy
