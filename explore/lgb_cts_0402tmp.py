@@ -96,7 +96,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 780
+    ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -128,7 +128,7 @@ feattstprev.fillna(-1, inplace = True)
 feattrnprev = feattrnprev.astype(np.int32)
 feattstprev = feattstprev.astype(np.int32)
 feattrnprv2  = pd.read_csv(path+'../features/prev_hday_clicks_trn%s.gz'%(add_), compression = 'gzip').astype(np.int16)
-feattstprv2  = pd.read_csv(path+'../features/prev_hday_clicks_tst%s.gz'%(add_), compression = 'gzip').astype(np.int16)
+feattstprv2  = pd.read_csv(path+'../features/prev_hday_clicks_tst%s.gz'%(add_), compression = 'gzip').astype(np.int15)
 
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
@@ -356,12 +356,6 @@ bst = lgb_modelfit_nocv(params,
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
 
-#[10]    train's auc: 0.96882    valid's auc: 0.964268
-#[20]    train's auc: 0.975323   valid's auc: 0.969386
-#[50]    train's auc: 0.980742   valid's auc: 0.97619
-#[100]   train's auc: 0.984239   valid's auc: 0.97993
-#[150]   train's auc: 0.98537    valid's auc: 0.980772
-#[200]   train's auc: 0.986157   valid's auc: 0.98145
 
 #[20]    train's auc: 0.973417   valid's auc: 0.968818
 #[50]    train's auc: 0.9805     valid's auc: 0.975818
@@ -390,14 +384,6 @@ else:
     idx = test_df['ip']<=max_ip
     fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-    print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb0204val.csv.gz',index=False, compression = 'gzip')
-    
-'''
-# Adding hour entropy
-Auc for all hours in testval : 0.9816845298783955
-Auc for select hours in testval : 0.9638276401595437
-'''
 
 '''
 # Adding hour entropy
@@ -417,41 +403,58 @@ Auc for all hours in testval : 0.98135282046753
 Auc for select hours in testval : 0.9631544908471926
 '''
 
+'''
+Auc for all hours in testval : 0.9810998331513668
+Auc for select hours in testval : 0.9625975906187854
+'''
+'''
+# Split sec lead app
+Auc for all hours in testval : 0.9809818567872455
+Auc for select hours in testval : 0.9622151446259039
+'''
+
+'''
+# Click sec lead of app
+Auc for all hours in testval : 0.980384724718358
+Auc for select hours in testval : 0.9613318834326467
+'''
+
+'''
+# Click sec lead of app
+Auc for all hours in testval : 0.9802027274200331
+Auc for select hours in testval : 0.9608878940255907
+'''
 
 #                         feat  imp
-#0                     channel  252
-#1                         app  199
-#2                          os  146
-#3    click_sec_lead_split_sec  134
-#4          click_sec_lead_app   48
-#5                        hour   38
-#6        ip_click_min_entropy   33
-#7               ip_os_entropy   30
-#8      iphr_click_min_entropy   29
-#9              ip_app_entropy   28
-#10                    qty_chl   28
-#11                     device   27
-#12          ip_device_entropy   25
-#13                        qty   24
-#14         ip_channel_entropy   22
-#15          click_sec_lag_app   17
-#16      unique_app_ipdevosmin   16
-#17               ip_app_count   15
-#18        ip_click_hr_entropy   15
-#19      click_sec_lead_shift2   14
-#20            ip_app_os_count    9
-#21         prev_app_hday_case    8
-#22         click_sec_lead_chl    7
-#23     prev_ipdevos_hday_case    6
-#24                prevday_qty    6
-#25               prevhour_qty    5
-#26                         ip    4
-#27          click_sec_lead_os    4
-#28        iphr_device_entropy    3
-#29              same_prev_app    3
-#30              same_next_app    2
-#31           click_sec_lag_os    2
-#32          click_sec_lag_chl    1
-#33  click_sec_lead_sameappchl    0
-#34              same_next_chl    0
-#35              same_prev_chl    0
+#0                     channel  265
+#1                         app  213
+#2                          os  133
+#3    click_sec_lead_split_sec  123
+#4          click_sec_lead_app   42
+#5                        hour   40
+#6      iphr_click_min_entropy   36
+#7                      device   30
+#8               ip_os_entropy   28
+#9              ip_app_entropy   27
+#10       ip_click_min_entropy   26
+#11          ip_device_entropy   25
+#12                    qty_chl   25
+#13                        qty   23
+#14      unique_app_ipdevosmin   21
+#15        ip_click_hr_entropy   19
+#16         ip_channel_entropy   19
+#17            ip_app_os_count   18
+#18      click_sec_lead_shift2   16
+#19          click_sec_lag_app   13
+#20                prevday_qty   11
+#21         click_sec_lead_chl   11
+#22               prevhour_qty    8
+#23               ip_app_count    8
+#24           click_sec_lag_os    6
+#25                         ip    4
+#26        iphr_device_entropy    3
+#27          click_sec_lag_chl    2
+#28          click_sec_lead_os    2
+#29              same_next_app    2
+#30  click_sec_lead_sameappchl    1
+#31              same_next_chl    0
