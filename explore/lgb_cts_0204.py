@@ -417,58 +417,41 @@ Auc for all hours in testval : 0.98135282046753
 Auc for select hours in testval : 0.9631544908471926
 '''
 
-'''
-Auc for all hours in testval : 0.9810998331513668
-Auc for select hours in testval : 0.9625975906187854
-'''
-'''
-# Split sec lead app
-Auc for all hours in testval : 0.9809818567872455
-Auc for select hours in testval : 0.9622151446259039
-'''
-
-'''
-# Click sec lead of app
-Auc for all hours in testval : 0.980384724718358
-Auc for select hours in testval : 0.9613318834326467
-'''
-
-'''
-# Click sec lead of app
-Auc for all hours in testval : 0.9802027274200331
-Auc for select hours in testval : 0.9608878940255907
-'''
 
 #                         feat  imp
-#0                     channel  265
-#1                         app  213
-#2                          os  133
-#3    click_sec_lead_split_sec  123
-#4          click_sec_lead_app   42
-#5                        hour   40
-#6      iphr_click_min_entropy   36
-#7                      device   30
-#8               ip_os_entropy   28
-#9              ip_app_entropy   27
-#10       ip_click_min_entropy   26
-#11          ip_device_entropy   25
-#12                    qty_chl   25
-#13                        qty   23
-#14      unique_app_ipdevosmin   21
-#15        ip_click_hr_entropy   19
-#16         ip_channel_entropy   19
-#17            ip_app_os_count   18
-#18      click_sec_lead_shift2   16
-#19          click_sec_lag_app   13
-#20                prevday_qty   11
-#21         click_sec_lead_chl   11
-#22               prevhour_qty    8
-#23               ip_app_count    8
-#24           click_sec_lag_os    6
-#25                         ip    4
-#26        iphr_device_entropy    3
-#27          click_sec_lag_chl    2
-#28          click_sec_lead_os    2
-#29              same_next_app    2
-#30  click_sec_lead_sameappchl    1
-#31              same_next_chl    0
+#0                     channel  252
+#1                         app  199
+#2                          os  146
+#3    click_sec_lead_split_sec  134
+#4          click_sec_lead_app   48
+#5                        hour   38
+#6        ip_click_min_entropy   33
+#7               ip_os_entropy   30
+#8      iphr_click_min_entropy   29
+#9              ip_app_entropy   28
+#10                    qty_chl   28
+#11                     device   27
+#12          ip_device_entropy   25
+#13                        qty   24
+#14         ip_channel_entropy   22
+#15          click_sec_lag_app   17
+#16      unique_app_ipdevosmin   16
+#17               ip_app_count   15
+#18        ip_click_hr_entropy   15
+#19      click_sec_lead_shift2   14
+#20            ip_app_os_count    9
+#21         prev_app_hday_case    8
+#22         click_sec_lead_chl    7
+#23     prev_ipdevos_hday_case    6
+#24                prevday_qty    6
+#25               prevhour_qty    5
+#26                         ip    4
+#27          click_sec_lead_os    4
+#28        iphr_device_entropy    3
+#29              same_prev_app    3
+#30              same_next_app    2
+#31           click_sec_lag_os    2
+#32          click_sec_lag_chl    1
+#33  click_sec_lead_sameappchl    0
+#34              same_next_chl    0
+#35              same_prev_chl    0
