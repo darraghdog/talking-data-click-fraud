@@ -9,6 +9,57 @@ library(Hmisc)
 path = '~/tdata/data/'
 #path = '/Users/dhanley2/Documents/tdata/data/'
 
+idx = 1:1000000
+trndf = fread(paste0(path, 'trainval.csv'))
+trndf[, sec_seq := 1:.N , by = click_time]
+cols_ = c("ip", "device", "os", "app")
+trndf$click_sec = as.numeric(fasttime::fastPOSIXct(trndf$click_time))
+trndf[, click_sec :=  click_sec - min( click_sec)] 
+trndf[,ct := .N, by = click_time]
+trndf[, split_sec := round((0:(.N-1))/.N, 8), by = click_time]
+trndf[, ct_sec := .N , by = click_time]
+trndf[, click_split_sec := click_sec + split_sec]
+trndf[, index := 1:nrow(trndf)]
+trndf = trndf[order(ip, os, device, app, click_split_sec)]
+trndf
+trndf[,click_sec_shift_lead := - click_split_sec + shift(click_split_sec, 1, type = "lead")]
+trndf[,seq_lead := .N:1, by = cols_ ]
+trndf[seq_lead == 1, click_sec_shift_lead := -1]
+
+trndf[(ip==6) & (app==19) & (device == 16) & (os==0)]
+
+idx = 1:3000000
+idx = idx[trndf[idx]$click_sec_shift_lead!=-1]
+table(cut2(round(1000*trndf[idx]$click_sec_shift_lead), g = 50), trndf[idx]$is_attributed)
+
+
+trndf[click_sec_shift_lead==-1][1:1000]
+
+# 0        1
+# FALSE 51121554    34771
+# TRUE  10807505   116171
+
+
+getSplitLead = function(df, cols_, fname, path, shift_n = 1){
+  df$click_sec = as.numeric(fasttime::fastPOSIXct(df$click_time))
+  df[, split_sec := round((0:(.N-1))/.N, 4), by = click_time]
+  df = df[,c(cols_, "click_sec", "split_sec"), with = F]
+  df[, index := 1:nrow(df)]
+  setorderv(df, c(cols_, "click_sec", "split_sec"))
+  df[,click_sec_shift_lead := shift(click_sec+split_sec, shift_n, type = "lead")]
+  df[,seq_lead := .N:1, by = cols_ ]
+  df[,click_sec_lead := click_sec_shift_lead - (click_sec + split_sec)]
+  df[,click_sec_lead := round(click_sec_lead, 4)]
+  df[seq_lead %in% 1:shift_n, click_sec_lead := 999999]
+  setorderv(df, "index")
+  new_name = "click_sec_lead_split_sec"
+  setnames(df, "click_sec_lead", new_name)
+  df = df[,new_name,with=F]
+  return(df)
+}
+
+
+
 # Write out the <ip, device, os> level
 trndf = fread(paste0(path, 'train.csv'))
 trndf[,attributed_time:=NULL]

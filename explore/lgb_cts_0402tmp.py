@@ -252,6 +252,13 @@ train_df = train_df.merge(featentip, on=['ip'], how='left')
 train_df = train_df.merge(featentiphr, on=['ip', 'hour'], how='left')
 train_df.head()
 
+print('[{}] group by...count device'.format(time.time() - start_time))
+gp = train_df['device'].value_counts().reset_index().rename(index=str, columns={'device': 'device_ct', 'index' : 'device'})
+print('merge...')
+train_df = train_df.merge(gp, on=['device'], how='left')
+del gp
+gc.collect()
+
 featentip.head()
 
 print('[{}] Data types'.format(time.time() - start_time))
@@ -270,23 +277,27 @@ test_df = train_df[len_train:]
 val_df = train_df[(len_train-val_size):len_train]
 train_df = train_df[:(len_train-val_size)]
 
-gc.collect()
-
 print('[{}] Get common train and test'.format(time.time() - start_time))
-for col in ['app', 'channel', 'channel_app', 'os', 'hour', 'device']:  
+for col in ['app', 'channel', 'os', 'hour', 'device']:  
     gc.collect()
     print('Get common to train and test : %s'%(col))
+    counts_ = train_df[col].value_counts().reset_index()
+    keepbig = counts_[counts_[col]>=5]['index']
     common = pd.Series(list(set(train_df[col]) & set(test_df[col])))
-    train_df[col][~train_df[col].isin(common)] = np.nan
-    test_df[col][~test_df[col].isin(common)] = np.nan
-    val_df  [col][~val_df[col].isin(common)] = np.nan
-    del common
+    keep = pd.Series(list(set(common).intersection(set(keepbig))))
+    train_df[col][~train_df[col].isin(keep)] = np.nan
+    test_df[col][~test_df[col].isin(keep)] = np.nan
+    val_df  [col][~val_df[col].isin(keep)] = np.nan
+    print('Length remaining for %s : %s' %(col, len(train_df[col].unique())))
+    del common, keep, keepbig
     gc.collect()
-for col in ['app', 'channel', 'channel_app', 'os', 'hour', 'device']:
+for col in ['app', 'channel', 'os', 'hour', 'device']:
     train_df[col] = train_df[col].astype(np.float32)
     test_df [col] = test_df[col].astype(np.float32)
     val_df  [col] = val_df[col].astype(np.float32)
 gc.collect()
+
+col = 'os'
 
 
 
