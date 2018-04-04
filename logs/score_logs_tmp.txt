@@ -1,0 +1,36 @@
+Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
+__________________________________________________________________________________________________________________
+lgb_cts_3003B.py           Add counts from prev days      200	   750        0.981473              0.9808
+lgg_cts_0104.py            Was there a case in prevday    200      780        0.98165               0.9807
+lgb_cts_2703B.py           Shift 2 and split click sec    200      800        0.981352   0.96315    0.9806
+lgb_cts_2503D.py           Adding lead time per app click 200      500        0.980202   0.96088    0.9799
+lgb_cts_2503baseline.py    Adding entropy                 200      ?          0.974848   0.95003    0.9743
+lgb_cts_2503B.py           Putting IP as catgeory         200      ?          0.973638   0.94740      
+lgb_cts_2503B.py           Interact of app/chl & os/chl   200      ?          0.97256    0.94526
+
+
+
+
+
+
+
+
+
+
+
+Script                     Description                    Small_test     LB - All rows LB - 800K rows
+=====================================================================================
+lgb_cts_2203D		   Common over 1000 ct ip's       0.971364
+lgb_cts_2203Bvalsmall.py   Get the common to trn & tst(hr)0.9712361
+lgb_cts_2203Bvalsmall.py   Get the common to trn & tst    0.97140
+lgb_cts_1903A.py           Adding entropy                 0.96816        0.9743
+lgb_cts_1703.py            LB lgb feat (more rounds)      0.96636        0.9734
+lgb_cts_1703.py            LB lgb with cts and lead lag   0.96409        0.9701        0.9682
+FTRL_giba1403              Adding lead and lag on channel 0.95945
+FTRL_giba1203B             Cat to cont; lead bucketed     0.95646
+FTRL_giba1203	           Just adding bucketed ip(50s)	0.95494
+FTRL_giba                  2 Epochs, public params        0.95319        0.9589        0.9598   
+feat_1003                  FFM ./ffm-train -r 0.1 -t 5    0.93351
+
+Overfit
+lgb_cts_1503.py  LB lgb with cts and lead lag   0.97064                      0.9697

@@ -1,16 +1,15 @@
-# lead5_split_sec_trn_ip_device_os_app
-gunzip  lead5_split_sec_trn_ip_device_os_app.gz
-sed -n 1,1p lead5_split_sec_trn_ip_device_os_app > lead5_split_sec_trn_ip_device_os_appval
-sed -n 60000000,122080000p lead5_split_sec_trn_ip_device_os_app >> lead5_split_sec_trn_ip_device_os_appval
-sed -n 1,1p lead5_split_sec_trn_ip_device_os_app > lead5_split_sec_tst_ip_device_os_appval
-sed -n 144710000,152400000p  lead5_split_sec_trn_ip_device_os_app >> lead5_split_sec_tst_ip_device_os_appval
-sed -n 162000000,168300000p  lead5_split_sec_trn_ip_device_os_app >> lead5_split_sec_tst_ip_device_os_appval
-sed -n 175000000,181880000p  lead5_split_sec_trn_ip_device_os_app >> lead5_split_sec_tst_ip_device_os_appval
-gzip lead5_split_sec_trn_ip_device_os_appval
-gzip lead5_split_sec_tst_ip_device_os_appval
-gzip lead5_split_sec_trn_ip_device_os_app
+# lead_split_sec_trn_ip
+gunzip lead_split_sec_trn_ip.gz
+sed -n 1,1p lead_split_sec_trn_ip > lead_split_sec_trn_ipval
+sed -n 60000000,122080000p lead_split_sec_trn_ip >> lead_split_sec_trn_ipval
 
-
+sed -n 1,1p lead_split_sec_trn_ip > lead_split_sec_tst_ipval
+sed -n 144710000,152400000p lead_split_sec_trn_ip >> lead_split_sec_tst_ipval
+sed -n 162000000,168300000p lead_split_sec_trn_ip >> lead_split_sec_tst_ipval
+sed -n 175000000,181880000p lead_split_sec_trn_ip >> lead_split_sec_tst_ipval
+gzip lead_split_sec_trn_ip
+gzip lead_split_sec_trn_ipval
+gzip lead_split_sec_tst_ipval
 
 
 ## ctr_test_hours_
