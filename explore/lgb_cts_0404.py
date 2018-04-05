@@ -88,7 +88,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation =  False
+validation =  True
 if validation:
     add_ = 'val'
     ntrees = 2000 # 200
