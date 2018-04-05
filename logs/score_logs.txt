@@ -1,5 +1,6 @@
 Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
 __________________________________________________________________________________________________________________
+lgb_cts_0404.py            Remove device '3032'           1087     1087       0.982944              0.9812
 lgb_cts_0304.py            Checking all round of val      1087     780        0.982944              0.9808
 lgg_cts_0104.py            Was there a case in prevday    200      780        0.98165               0.9807
 lgb_cts_3003B.py           Add counts from prev days      200	   750        0.981473              0.9808

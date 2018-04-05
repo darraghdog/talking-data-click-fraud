@@ -66,7 +66,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-path = '/home/ubuntu/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -88,19 +88,36 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = False
+validation = True
 if validation:
-    add_ = 'val'
+    add_ = ''
     ntrees = 200
     early_stop = 50
+    train_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
+    trn_idx = pd.np.r_[60000000:122080000]
+    tst_idx = pd.np.r_[144710000:152400000, 162000000:168300000, 175000000:181880000]
+    tst_file = 'trn' 
+    tst_file1 = 'train' 
 else:
     ntrees = 800
     val_size = 10000
     early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
+    trn_idx = pd.np.r_[0:184903890]
+    tst_idx = pd.np.r_[0:18790469]
+    tst_file = 'tst' 
+    tst_file1 = 'test' 
+    
+    
+print('[{}] Load Train'.format(time.time() - start_time))
+train_df = pd.read_csv(path+"train.csv", dtype=dtypes, usecols=train_usecols).iloc(trn_idx)
+print('[{}] Load Test'.format(time.time() - start_time))
+test_df = pd.read_csv(path+"%s.csv"%(tst_file1), dtype=dtypes, usecols=test_usecols).iloc(tst_idx)
+print(train_df.shape)
+print(test_df.shape)
 
 print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
