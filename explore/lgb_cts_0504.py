@@ -88,41 +88,28 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation =  True
 if validation:
-    ntrees = 200
-    early_stop = 50
-    train_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
+    add_ = 'val'
+    ntrees = 2000 # 200
+    early_stop = 100
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
-    trn_idx = pd.np.r_[60000000:122080000]
-    tst_idx = pd.np.r_[144710000:152400000, 162000000:168300000, 175000000:181880000]
-    tst_file = 'trn' 
-    tst_file1 = 'train' 
 else:
-    ntrees = 800
+    ntrees = 1000
     val_size = 10000
     early_stop = ntrees
+    add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
-    trn_idx = pd.np.r_[0:184903890]
-    tst_idx = pd.np.r_[0:18790469]
-    tst_file = 'tst' 
-    tst_file1 = 'test' 
-    
+
 print('[{}] Load Train'.format(time.time() - start_time))
-train_df = pd.read_csv(path+"train.csv", dtype=dtypes, usecols=train_usecols).ix[trn_idx].reset_index(drop=True)
+train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
-test_df = pd.read_csv(path+"%s.csv"%(tst_file1), dtype=dtypes, usecols=test_usecols).ix[tst_idx].reset_index(drop=True)
+test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
 print('[{}] Load Features'.format(time.time() - start_time))
-feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app.gz', compression = 'gzip').ix[trn_idx].reset_index(drop=True)
-feattstapp = pd.read_csv(path+'../features/lead_lag_%s_ip_device_os_app.gz'%(tst_file), compression = 'gzip').ix[tst_idx].reset_index(drop=True)
-
-print(train_df.shape)
-print(test_df.shape)
-print(feattrnapp.shape)
-print(feattstapp.shape)
-
+feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
 feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
 feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
@@ -135,22 +122,19 @@ feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnnext  = pd.read_csv(path+'../features/next_trn_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
 feattstnext  = pd.read_csv(path+'../features/next_tst_ip_device_os%s.gz'%(add_), compression = 'gzip').astype(np.int8)
+# feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip').astype(np.int32)
+# feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip').astype(np.int32)
+
 feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip')#.astype(np.int32)
 feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip')#.astype(np.int32)
 feattstprev.fillna(-1, inplace = True)
 feattrnprev = feattrnprev.astype(np.int32)
 feattstprev = feattstprev.astype(np.int32)
-feattrnprv2  = pd.read_csv(path+'../features/prev_hday_clicks_trn%s.gz'%(add_), compression = 'gzip').astype(np.int16)
-feattstprv2  = pd.read_csv(path+'../features/prev_hday_clicks_tst%s.gz'%(add_), compression = 'gzip').astype(np.int15)
+
 
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
-featentiphr  = pd.read_csv(path+'../features/entropyiphr.gz', compression = 'gzip')
-featentiphr.iloc[:,2:] = featentiphr.iloc[:,2:].astype(np.float32)
-featentiphr.iloc[:,[0,1]] = featentiphr.iloc[:,[0,1]].astype('uint32')
-featentiphr.rename(columns={'click_hr': 'hour'}, inplace = True)
-
 
 
 print('[{}] Finished Loading Features, start concatenate'.format(time.time() - start_time))
@@ -202,8 +186,8 @@ print(test_df.shape)
 
 
 print('[{}] Concat Train/Test'.format(time.time() - start_time))
-train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev, feattrnprv2], axis=1)
-test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev, feattstprv2], axis=1)
+train_df = pd.concat([train_df, feattrn, feattrnnext, feattrnprev], axis=1)
+test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev], axis=1)
 del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev
 gc.collect()
 
@@ -260,17 +244,16 @@ train_df = train_df.merge(gp, on=['ip','app', 'os'], how='left')
 del gp
 gc.collect()
 
+#print('[{}] group by...count device'.format(time.time() - start_time))
+#gp = train_df['device'].value_counts().reset_index().rename(index=str, columns={'device': 'device_ct', 'index' : 'device'})
+#print('merge...')
+#train_df = train_df.merge(gp, on=['device'], how='left')
+#del gp
+gc.collect()
+
 print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
-train_df = train_df.merge(featentiphr, on=['ip', 'hour'], how='left')
 train_df.head()
-
-print('[{}] group by...count device'.format(time.time() - start_time))
-gp = train_df['device'].value_counts().reset_index().rename(index=str, columns={'device': 'device_ct', 'index' : 'device'})
-print('merge...')
-train_df = train_df.merge(gp, on=['device'], how='left')
-del gp
-gc.collect()
 
 featentip.head()
 
@@ -279,8 +262,7 @@ train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
 train_df['click_sec_lead_shift2'] = train_df['click_sec_lead_shift2'].astype('int32')
-train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
-train_df.drop(['day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
+#train_df['channel_app'] = train_df['channel'] + 500*train_df['app']
 train_df.info()
 gc.collect()
 
@@ -290,6 +272,15 @@ test_df = train_df[len_train:]
 val_df = train_df[(len_train-val_size):len_train]
 train_df = train_df[:(len_train-val_size)]
 
+## Remove the first day
+#train_df = train_df[(train_df['day']>6) & ~((train_df['day']==7) & ( train_df['hour']<4))]
+
+# Remove device 3032
+print('Device 3032 shape : %s'%(train_df[train_df['device']==3032].shape[0]))
+train_df = train_df[train_df['device']!=3032]
+train_df.drop(['day', 'click_time' ,'unique_app_ipdevos'], axis = 1, inplace = True)
+gc.collect()
+
 print('[{}] Get common train and test'.format(time.time() - start_time))
 for col in ['app', 'channel', 'os', 'hour', 'device']:  
     gc.collect()
@@ -297,7 +288,7 @@ for col in ['app', 'channel', 'os', 'hour', 'device']:
     counts_ = train_df[col].value_counts().reset_index()
     keepbig = counts_[counts_[col]>=5]['index']
     common = pd.Series(list(set(train_df[col]) & set(test_df[col])))
-    keep = pd.Series(list(set(common).intersection(set(keepbig))))
+    keep = common #pd.Series(list(set(common).intersection(set(keepbig))))
     train_df[col][~train_df[col].isin(keep)] = np.nan
     test_df[col][~test_df[col].isin(keep)] = np.nan
     val_df  [col][~val_df[col].isin(keep)] = np.nan
@@ -310,10 +301,6 @@ for col in ['app', 'channel', 'os', 'hour', 'device']:
     val_df  [col] = val_df[col].astype(np.float32)
 gc.collect()
 
-col = 'os'
-
-
-
 print('[{}] Data split complete'.format(time.time() - start_time))
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
@@ -321,8 +308,8 @@ print("test size : ", len(test_df))
 
 lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
-lead_cols += [col for col in train_df.columns if 'prev_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
+lead_cols += [col for col in train_df.columns if 'device_ct' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
@@ -343,7 +330,7 @@ if not validation:
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
 else:
-    val_df = test_df.sample(frac=0.025, replace=False, random_state=0)
+    val_df = test_df#.sample(frac=0.025, replace=False, random_state=0)
     gc.collect()
 
     
@@ -351,6 +338,17 @@ print('[{}] Drop features complete'.format(time.time() - start_time))
 print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
+
+print('[{}] For Trainig and Evaluation drop apps 151, 56, 4, 23'.format(time.time() - start_time))
+nzapps = [151, 56, 4, 23] # Very low click apps
+trn_idx = ~train_df['app'].isin(nzapps)
+tst_idx = ~test_df['app'].isin(nzapps)
+val_idx = ~val_df['app'].isin(nzapps)
+train_df = train_df[trn_idx]
+gc.collect()
+print("train size: ", len(train_df))
+print("valid size: ", len(val_df  [val_idx]))
+print("test size : ", len(test_df [tst_idx]))
 
 print('[{}] Training...'.format(time.time() - start_time))
 params = {
@@ -370,7 +368,7 @@ params = {
 
 bst = lgb_modelfit_nocv(params, 
                         train_df, 
-                        val_df, 
+                        val_df[val_idx], 
                         predictors, 
                         target, 
                         objective='binary', 
@@ -379,14 +377,6 @@ bst = lgb_modelfit_nocv(params,
                         verbose_eval=True, 
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
-
-
-#[20]    train's auc: 0.973417   valid's auc: 0.968818
-#[50]    train's auc: 0.9805     valid's auc: 0.975818
-#[100]   train's auc: 0.984012   valid's auc: 0.979628
-#[150]   train's auc: 0.985237   valid's auc: 0.980971
-#[200]   train's auc: 0.985966   valid's auc: 0.981573
-
 
 gc.collect()
 imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
@@ -397,88 +387,66 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb0204.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb0304C.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
     max_ip = 126413
-    preds =   bst.predict(test_df[predictors])
-    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-    idx = test_df['ip']<=max_ip
-    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+    preds_orig =   bst.predict(test_df[predictors])
+    for div_ in [1,2,5,10,20,50,100,200,500,1000]:
+        print(50*'-')
+        print('Divide low app preds by %s'%(div_))
+        print(50*'-')
+        preds = np.copy(preds_orig)
+        preds[~tst_idx] = preds[~tst_idx]/div_
+        # print('preds sum %s'%(preds.sum()))
+        fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
+        print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+        idx = test_df['ip']<=max_ip
+        fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+        print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+        del preds, fpr, tpr, thresholds, fpr1, tpr1, thresholds1 
+        print("writing...")
+    predsdf = pd.DataFrame(preds_orig)
+    predsdf.to_csv(path + '../sub/preds_lgb0504val.csv.gz',index=False, compression = 'gzip')
 
-'''
-# Adding hour entropy
-Auc for all hours in testval : 0.9815007141837265
-Auc for select hours in testval : 0.9634111249801599
-'''
+#Early stopping, best iteration is:
+#[1087]	train's auc: 0.988464	valid's auc: 0.982944
+#
+#Model Report
+#n_estimators :  1087
+#auc: 0.98294446789
+#                         feat   imp
+#0                     channel  1604
+#1                          os  1090
+#2                         app  1075
+#3    click_sec_lead_split_sec   333
+#4                        hour   204
+#5          ip_channel_entropy   167
+#6                ip_app_count   155
+#7               ip_os_entropy   155
+#8         ip_click_hr_entropy   150
+#9           ip_device_entropy   138
+#10             ip_app_entropy   122
+#11                    qty_chl   116
+#12                        qty   111
+#13      unique_app_ipdevosmin   111
+#14         click_sec_lead_app   111
+#15       ip_click_min_entropy   106
+#16      click_sec_lead_shift2   104
+#17            ip_app_os_count    94
+#18                         ip    81
+#19          click_sec_lag_app    75
+#20           click_sec_lag_os    74
+#21               prevhour_qty    66
+#22                prevday_qty    61
+#23                     device    59
+#24          click_sec_lead_os    51
+#25         click_sec_lead_chl    39
+#26          click_sec_lag_chl    34
+#27              same_next_app    15
+#28              same_next_chl    12
+#29  click_sec_lead_sameappchl     9
+#Auc for all hours in testval : 0.98294446789
+#Auc for select hours in testval : 0.96635713661
 
-'''
-# yesterday's counts
-Auc for all hours in testval : 0.9814728229902597
-Auc for select hours in testval : 0.9633564861135612
-'''
-
-'''
-Without channel app
-Auc for all hours in testval : 0.98135282046753
-Auc for select hours in testval : 0.9631544908471926
-'''
-
-'''
-Auc for all hours in testval : 0.9810998331513668
-Auc for select hours in testval : 0.9625975906187854
-'''
-'''
-# Split sec lead app
-Auc for all hours in testval : 0.9809818567872455
-Auc for select hours in testval : 0.9622151446259039
-'''
-
-'''
-# Click sec lead of app
-Auc for all hours in testval : 0.980384724718358
-Auc for select hours in testval : 0.9613318834326467
-'''
-
-'''
-# Click sec lead of app
-Auc for all hours in testval : 0.9802027274200331
-Auc for select hours in testval : 0.9608878940255907
-'''
-
-#                         feat  imp
-#0                     channel  265
-#1                         app  213
-#2                          os  133
-#3    click_sec_lead_split_sec  123
-#4          click_sec_lead_app   42
-#5                        hour   40
-#6      iphr_click_min_entropy   36
-#7                      device   30
-#8               ip_os_entropy   28
-#9              ip_app_entropy   27
-#10       ip_click_min_entropy   26
-#11          ip_device_entropy   25
-#12                    qty_chl   25
-#13                        qty   23
-#14      unique_app_ipdevosmin   21
-#15        ip_click_hr_entropy   19
-#16         ip_channel_entropy   19
-#17            ip_app_os_count   18
-#18      click_sec_lead_shift2   16
-#19          click_sec_lag_app   13
-#20                prevday_qty   11
-#21         click_sec_lead_chl   11
-#22               prevhour_qty    8
-#23               ip_app_count    8
-#24           click_sec_lag_os    6
-#25                         ip    4
-#26        iphr_device_entropy    3
-#27          click_sec_lag_chl    2
-#28          click_sec_lead_os    2
-#29              same_next_app    2
-#30  click_sec_lead_sameappchl    1
-#31              same_next_chl    0

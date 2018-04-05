@@ -7,7 +7,23 @@ library(fasttime)
 library(Hmisc)
 
 path = '~/tdata/data/'
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
+
+chk_app = 23
+keep  = c("app", "device", "click_time", "is_attributed")
+trndf = fread(paste0(path, 'train.csv'))
+trndf = trndf[, keep, with = F]
+gc(); gc()
+trndf[, ct:= .N, by = app]
+nrow(trndf[device==3032]) # 692891
+trndf[, click_sec := as.numeric(fasttime::fastPOSIXct(click_time))]
+trndf[, click_sec := click_sec - min(trndf$click_sec)]
+trndf[, click_day := round((click_sec)/(24*3600))]
+aggdf = trndf[ct>100000, .(mean(is_attributed), sum(is_attributed), .N), by = app]
+setnames(aggdf, c("app", "ymean", "ysum", "count"))
+aggdf = aggdf[order(ymean)]
+
+
 
 idx = 1:1000000
 trndf = fread(paste0(path, 'trainval.csv'))
