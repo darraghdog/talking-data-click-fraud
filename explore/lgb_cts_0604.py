@@ -112,6 +112,10 @@ feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(
 feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
 feattstspl = pd.read_csv(path+'../features/lead_split_sec_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattrnsp1 = pd.read_csv(path+'../features/lead_split_sec_trn_ip%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattstsp1 = pd.read_csv(path+'../features/lead_split_sec_tst_ip%s.gz'%(add_), compression = 'gzip').astype(np.float32)
+feattstsp1.columns = feattrnsp1.columns = [i+'_ip_only' for i in feattrnsp1.columns.tolist()]
+
 feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
 feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os%s.gz'%(add_), compression = 'gzip')
@@ -172,10 +176,10 @@ gc.collect()
 clip_val = 3600*9
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
-feattrn = pd.concat([feattrn, feattrnld2, feattrnspl], axis=1)
-feattst = pd.concat([feattst, feattstld2, feattstspl], axis=1)
-del feattrnld2, feattrnspl
-del feattstld2, feattstspl
+feattrn = pd.concat([feattrn, feattrnld2, feattrnspl, feattrnsp1], axis=1)
+feattst = pd.concat([feattst, feattstld2, feattstspl, feattstsp1], axis=1)
+del feattrnld2, feattrnspl, feattrnsp1
+del feattstld2, feattstspl, feattstsp1
 gc.collect()
 #feattrn.hist()
 #feattst.hist()
@@ -306,6 +310,7 @@ print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
+exclude_cols = ['same_next_app', 'same_next_chl']
 lead_cols = [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
@@ -314,6 +319,7 @@ lead_cols += [col for col in train_df.columns if 'entropy' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour', 'ip_app_count', 'ip_app_os_count', 'unique_app_ipdevosmin']
 lead_cols = list(set(lead_cols))
+lead_cols = [v for v in lead_cols if v not in exclude_cols]
 
 target = 'is_attributed'
 predictors =  lead_cols
@@ -339,17 +345,6 @@ print("train size: ", len(train_df))
 print("valid size: ", len(val_df))
 print("test size : ", len(test_df))
 
-print('[{}] For Trainig and Evaluation drop apps 151, 56, 4, 23'.format(time.time() - start_time))
-nzapps = [151, 56, 4, 23] # Very low click apps
-trn_idx = ~train_df['app'].isin(nzapps)
-tst_idx = ~test_df['app'].isin(nzapps)
-val_idx = ~val_df['app'].isin(nzapps)
-train_df = train_df[trn_idx]
-gc.collect()
-print("train size: ", len(train_df))
-print("valid size: ", len(val_df  [val_idx]))
-print("test size : ", len(test_df [tst_idx]))
-
 print('[{}] Training...'.format(time.time() - start_time))
 params = {
     'learning_rate': 0.1,
@@ -368,7 +363,7 @@ params = {
 
 bst = lgb_modelfit_nocv(params, 
                         train_df, 
-                        val_df[val_idx], 
+                        val_df, 
                         predictors, 
                         target, 
                         objective='binary', 
@@ -377,6 +372,14 @@ bst = lgb_modelfit_nocv(params,
                         verbose_eval=True, 
                         num_boost_round=ntrees, 
                         categorical_features=categorical)
+
+
+#[20]    train's auc: 0.973417   valid's auc: 0.968818
+#[50]    train's auc: 0.9805     valid's auc: 0.975818
+#[100]   train's auc: 0.984012   valid's auc: 0.979628
+#[150]   train's auc: 0.985237   valid's auc: 0.980971
+#[200]   train's auc: 0.985966   valid's auc: 0.981573
+
 
 gc.collect()
 imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
@@ -392,23 +395,15 @@ if not validation:
     print(sub.info())
 else:
     max_ip = 126413
-    preds_orig =   bst.predict(test_df[predictors])
-    for div_ in [1,2,5,10,20,50,100,200,500,1000]:
-        print(50*'-')
-        print('Divide low app preds by %s'%(div_))
-        print(50*'-')
-        preds = np.copy(preds_orig)
-        preds[~tst_idx] = preds[~tst_idx]/div_
-        # print('preds sum %s'%(preds.sum()))
-        fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-        print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-        idx = test_df['ip']<=max_ip
-        fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-        print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-        del preds, fpr, tpr, thresholds, fpr1, tpr1, thresholds1 
-        print("writing...")
-    predsdf = pd.DataFrame(preds_orig)
-    predsdf.to_csv(path + '../sub/preds_lgb0504val.csv.gz',index=False, compression = 'gzip')
+    preds =   bst.predict(test_df[predictors])
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    idx = test_df['ip']<=max_ip
+    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
+    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+    print("writing...")
+    predsdf = pd.DataFrame(preds)
+    predsdf.to_csv(path + '../sub/sub_lgb0304val.csv.gz',index=False, compression = 'gzip')
 
 #Early stopping, best iteration is:
 #[1087]	train's auc: 0.988464	valid's auc: 0.982944
