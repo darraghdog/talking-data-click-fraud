@@ -43,12 +43,16 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
                           feature_name=predictors,
                           categorical_feature=categorical_features
                           )
-
+    xgtrain.save_binary(path + '../weights/train_lgb.bin')
+    xgtraindisk = lgb.Dataset(path + '../weights/train_lgb.bin', 
+                             feature_name=predictors, 
+                             categorical_feature=categorical,
+                             free_raw_data=False)
     evals_results = {}
 
     bst1 = lgb.train(lgb_params, 
-                     xgtrain, 
-                     valid_sets=[xgtrain, xgvalid], 
+                     xgtraindisk, 
+                     valid_sets=[xgtraindisk, xgvalid], 
                      valid_names=['train','valid'], 
                      evals_result=evals_results, 
                      num_boost_round=num_boost_round,
