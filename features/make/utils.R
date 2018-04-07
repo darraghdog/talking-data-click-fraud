@@ -9,13 +9,14 @@ writeme = function(df, name){
             row.names = F, quote = F)
 }
 
-getPeriodCt = function(df, cols_, count_period){
+
+getPeriodCt = function(df, cols_, count_period, intervals){
   df = df[,c(cols_, "split_sec"), with = F]
   df[, index := 1:nrow(df)]
   setorderv(df, c(cols_, "split_sec"))
   df[,next_ten := 0]
   df[,seq_lead := .N:1, by = cols_ ]
-  for (shift_n in c(1:49, 5*(10:20),10*(11:39), 20*(20:50))){
+  for (shift_n in intervals){
     print(shift_n)
     df[,click_sec_shift_lead := shift(split_sec, shift_n, type = "lead")]
     df[(seq_lead>shift_n) & ((click_sec_shift_lead - split_sec) < (count_period*10000)), next_ten := shift_n]
@@ -26,6 +27,7 @@ getPeriodCt = function(df, cols_, count_period){
   df = df[,new_name,with=F]
   return(df)
 }
+
 
 getSplitLead2 = function(df, cols_, fname, path, shift_n = 1){
   df$click_sec = as.numeric(fasttime::fastPOSIXct(df$click_time))

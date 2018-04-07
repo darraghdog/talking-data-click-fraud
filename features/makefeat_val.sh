@@ -129,3 +129,16 @@ sed -n 175000000,181880000p  prevdayipchlqtytrn >> prevdayipchlqtytstval
 gzip prevdayipchlqtytrnval
 gzip prevdayipchlqtytstval
 gzip prevdayipchlqtytrn
+
+# lead_count_next_ipdevosapp_trn
+gunzip lead_count_next_ipdevosapp_trn.gz
+sed -n 1,1p lead_count_next_ipdevosapp_trn > lead_count_next_ipdevosapp_trnval
+sed -n 60000000,122080000p lead_count_next_ipdevosapp_trn >> lead_count_next_ipdevosapp_trnval
+
+sed -n 1,1p lead_count_next_ipdevosapp_trn > lead_count_next_ipdevosapp_tstval
+sed -n 144710000,152400000p lead_count_next_ipdevosapp_trn >> lead_count_next_ipdevosapp_tstval
+sed -n 162000000,168300000p lead_count_next_ipdevosapp_trn >> lead_count_next_ipdevosapp_tstval
+sed -n 175000000,181880000p lead_count_next_ipdevosapp_trn >> lead_count_next_ipdevosapp_tstval
+gzip lead_count_next_ipdevosapp_trn
+gzip lead_count_next_ipdevosapp_trnval
+gzip lead_count_next_ipdevosapp_tstval
