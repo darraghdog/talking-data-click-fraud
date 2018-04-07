@@ -70,7 +70,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -92,7 +92,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation =  True
+validation =  False
 if validation:
     add_ = 'val'
     ntrees = 2000 # 200
@@ -365,7 +365,6 @@ params = {
     'scale_pos_weight':99 # because training data is extremely unbalanced 
 }
 
-
 bst = lgb_modelfit_nocv(params, 
                         train_df, 
                         val_df, 
@@ -400,7 +399,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb0304C.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb0704.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -413,7 +412,7 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb0604Cval.csv.gz',index=False, compression = 'gzip')
+    predsdf.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
 
 #Early stopping, best iteration is:
 #[875]   train's auc: 0.988508   valid's auc: 0.983024
