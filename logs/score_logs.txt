@@ -1,7 +1,7 @@
 Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
 __________________________________________________________________________________________________________________
 lgb_cts_0704.py            lead_count_next_ipdevosapp_t*  875      1000       0.983024              0.9813
-lgb_cts_0704A.py           lead_count_next_ipdevos_t*     875      1000       0.983045              0.9812
+lgb_cts_0704A.py           lead_count_next_ipdevos_t*     875      900        0.983045              0.9812
 lgb_cts_0404.py            Remove device '3032'           1087     1087       0.982944              0.9812
 lgb_cts_0304.py            Checking all round of val      1087     780        0.982944              0.9808
 lgg_cts_0104.py            Was there a case in prevday    200      780        0.98165               0.9807
