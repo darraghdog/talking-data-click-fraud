@@ -1,3 +1,5 @@
+*.pkl
+*.ffm
 *.h5
 *.vec
 *.out
