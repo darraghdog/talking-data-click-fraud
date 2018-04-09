@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings('ignore')
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
-#path = '/Users/dhanley2/Documents/tdata/data/'
+path = '/Users/dhanley2/Documents/tdata/data/'
 #path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
@@ -50,8 +50,6 @@ else:
     early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
-
-
 
 
 if load_raw:
@@ -306,76 +304,22 @@ if load_raw:
     print("valid size: ", len(val_df))
     print("test size : ", len(test_df))
     
-    train_df.to_pickle(path + '../weights/train_df%s.pkl'%(add_))
-    val_df.to_pickle(path + '../weights/val_df%s.pkl'%(add_))
-    test_df.to_pickle(path + '../weights/test_df%s.pkl'%(add_))
+    train_df.to_feather(path + '../weights/train_df%s.feather'%(add_))
+    test_df.reset_index(drop = True, inplace = True)
+    test_df.to_feather(path + '../weights/test_df%s.feather'%(add_))
     if not validation:
         sub.to_pickle(path + '../weights/sub%s.pkl'%(add_))
         del sub
-    del train_df, val_df, test_df
+    del train_df, test_df
     gc.collect()
-
-
-class FFMFormatPandas:
-    def __init__(self):
-        self.field_index_ = None
-        self.feature_index_ = None
-        self.y = None
-
-    def fit(self, df, y=None):
-        self.y = y
-        df_ffm = df[df.columns.difference([self.y])]
-        if self.field_index_ is None:
-            self.field_index_ = {col: i for i, col in enumerate(df_ffm)}
-
-        if self.feature_index_ is not None:
-            last_idx = max(list(self.feature_index_.values()))
-
-        if self.feature_index_ is None:
-            self.feature_index_ = dict()
-            last_idx = 0
-
-        for col in df.columns:
-            vals = df[col].unique()
-            for val in vals:
-                if pd.isnull(val):
-                    continue
-                name = '{}_{}'.format(col, val)
-                if name not in self.feature_index_:
-                    self.feature_index_[name] = last_idx
-                    last_idx += 1
-            self.feature_index_[col] = last_idx
-            last_idx += 1
-        return self
-
-    def fit_transform(self, df, y=None):
-        self.fit(df, y)
-        return self.transform(df)
-
-    def transform_row_(self, row, t):
-        ffm = []
-        if self.y != None:
-            ffm.append(str(row.loc[row.index == self.y][0]))
-        if self.y is None:
-            ffm.append(str(0))
-
-        for col, val in row.loc[row.index != self.y].to_dict().items():
-            col_type = t[col]
-            name = '{}_{}'.format(col, val)
-            if col_type.kind ==  'O':
-                ffm.append('{}:{}:1'.format(self.field_index_[col], self.feature_index_[name]))
-            elif col_type.kind == 'i':
-                ffm.append('{}:{}:{}'.format(self.field_index_[col], self.feature_index_[col], val))
-        return ' '.join(ffm)
-
-    def transform(self, df):
-        t = df.dtypes.to_dict()
-        return pd.Series({idx: self.transform_row_(row, t) for idx, row in df.iterrows()})
-
 
 def logsm(var, mult):
     var[var == -1] = 999999
     return np.log2((1+(var**1.5))*mult).astype(np.int32)#.astype('str')
+
+def logspl(var, mult):
+    var[var == -1] = 999999
+    return np.log2((1+((var*10))*mult)).astype(np.int32)#.astype('str')
 
 def numsm(var, mult):
     return (var*mult).astype(np.int32)#.astype('str')
@@ -411,86 +355,53 @@ def df2ffmdf(df):
     return df
 
 
-int_cols = ['app', 'device', 'os', 'channel', 'day_minute', 'hour']
+int_cols = ['app', 'device', 'os', 'channel', 'day_minute']
 logsm1_cols = ['qty', 'prevday_qty', 'prevhour_qty', 'count_in_next_ten_mins']
 
 logsm2_cols = ['click_sec_lead_chl', 'click_sec_lag_chl', 'click_sec_lag_os', \
             'click_sec_lead_sameappchl', 'click_sec_lead_shift2', 'count_in_next_hr', \
             'ip_app_count', 'ip_app_os_count', 'qty_chl',  'unique_app_ipdevosmin', \
             'click_sec_lead_os', 'click_sec_lead_app', 'click_sec_lag_app']
-logsm4_cols = ['click_sec_lead_split_sec', 'click_sec_lead_split_sec_ip_only', 'ip_os_entropy.y']
-numsm_cols =  ['ip_device_entropy', 'ip_app_entropy', 'ip_os_entropy.x', 'ip_click_min_entropy', \
+logsm4_cols = ['click_sec_lead_split_sec', 'click_sec_lead_split_sec_ip_only']
+numsm_cols =  ['ip_device_entropy', 'ip_app_entropy', 'ip_os_entropy', 'ip_click_min_entropy', \
                'ip_click_hr_entropy', 'ip_channel_entropy']
 drop_cols = []
 
 allcols = int_cols + logsm1_cols + logsm2_cols + logsm4_cols + numsm_cols 
-ffmcolmap = dict((k, 1+v) for (v, k) in enumerate(list(set(allcols))))
+ffmcolmap = dict((k, 1+v) for (v, k) in enumerate(col_order))
+
 
 # Check we are not missing any
 #[col for col in train_df.columns if col not in allcols]
 
-
-train_df = df2ffmdf(pd.read_pickle(path + '../weights/train_df%s.pkl'%(add_)))
+train_df = df2ffmdf(pd.read_feather(path + '../weights/train_df%s.feather'%(add_)))
+train_df  = train_df[col_order]
+train_df['hour'].fillna(30, inplace = True)
+train_df['hour'] = train_df['hour'].astype(np.int16)
 gc.collect()
-test_df  = df2ffmdf(pd.read_pickle(path + '../weights/test_df%s.pkl'%(add_)))
+test_df  = df2ffmdf(pd.read_feather(path + '../weights/test_df%s.feather'%(add_)))
+test_df  = test_df[col_order]
+test_df['hour'].fillna(30, inplace = True)
+test_df['hour'] = test_df['hour'].astype(np.int16)
+ffmcolmap['hour'] = len(ffmcolmap)+1
 gc.collect()
 
-if not validation:
-    sub  = read_pickle(path + '../weights/sub%s.pkl'%(add_))
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
-test_df.reset_index(drop=True, inplace = True)
-train_df.reset_index(drop=True, inplace = True)
+def chunk_write(df, fname, chunksize):
+    for t, adf in enumerate(chunker(df, chunksize)):
+        print('[{}] Write chunk '.format(time.time() - start_time) + str(t))
+        for col in adf.columns:
+            if col!='is_attributed':
+                adf[col] =  str(ffmcolmap[col]) + ':' + adf[col].map(str) + ':1'
+        with open(fname, 'a') as f:
+            adf.to_csv(f, sep=' ', header = False, index = False)  
 
-train_df.dtypes
-train_df.head()
-
-
-for t, row in test_df.iterrows():
-    if t%4000==0:
-        break
-fname = path + '../weights/test_df.ffm'
-
-
-ffm_train = FFMFormatPandas()
-ffm_test_data = ffm_train.fit_transform(test_df, y='is_attributed')
-
-with open(fname, 'w') as outfile:
-    for t, row in tqdm(test_df.iterrows()):
-        #if t%1000000==0:
-        #    print("Write file processed rows : %sM ; %ss "%( int(t/1e+6), '%0.0f'%(time.time()-start_time)))
-            
-        # Make target
-        if 'is_attributed' in row:
-            out = str(int(row['is_attributed']))
-            del row['is_attributed']
-        else:
-            out = '0'
-            
-        # Add features
-        for kidx, vidx in ffmcolmap.items():
-            if row[kidx]!=row[kidx]:
-                continue
-            v = int(row[kidx])
-            out += ' %s:%s:1'%(ffmcolmap[kidx], vidx)
-        
-        outfile.write('%s\n' % (out))
-    
-    print('Files missing key counts...')
-    for k, v in missing_keys.items():
-        print(k, len(list(set(v))),len(list(v)))
-
-# 'click_sec_os_chl'
-#allcols = int_cols+logsm1_cols+logsm2_cols+logsm4_cols+numsm_cols
-#[col for col in train_df.columns if col not in allcols]
-
-
-
-for t, row in tqdm(test_df.iterrows()):
-    row
-    if t > 1000000:
-        break
-
-
+fname_tst = path + '../weights/test_df%s.ffm'%(add_)
+chunk_write(test_df, fname_tst, 1000000)
+fname_trn = path + '../weights/train_df%s.ffm'%(add_)
+chunk_write(train_df, fname_trn, 1000000)
 
 
 '''            
@@ -510,34 +421,6 @@ darragh@darragh-xps:~/pkgs/libffm/libffm_toy$ head criteo.va.r100.gbdt0.ffm
 '''
 
 
-print('[{}] Training...'.format(time.time() - start_time))
-params = {
-    'learning_rate': 0.1,
-    #'is_unbalance': 'true', # replaced with scale_pos_weight argument
-    'num_leaves': 7,  # we should let it be smaller than 2^(max_depth)
-    'max_depth': 3,  # -1 means no limit
-    'min_child_samples': 100,  # Minimum number of data need in a child(min_data_in_leaf)
-    'max_bin': 100,  # Number of bucketed bin for feature values
-    'subsample': 0.7,  # Subsample ratio of the training instance.
-    'subsample_freq': 1,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.7,  # Subsample ratio of columns when constructing each tree.
-    'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
-    'scale_pos_weight':99 # because training data is extremely unbalanced 
-}
-
-bst = lgb_modelfit_nocv(params, 
-                        train_df, 
-                        val_df, 
-                        predictors, 
-                        target, 
-                        objective='binary', 
-                        metrics='auc',
-                        early_stopping_rounds=early_stop, 
-                        verbose_eval=True, 
-                        num_boost_round=ntrees, 
-                        categorical_features=categorical)
-
-
 #[50]    train's auc: 0.980264   valid's auc: 0.974851
 #[100]   train's auc: 0.984106   valid's auc: 0.97945
 #[200]   train's auc: 0.986127   valid's auc: 0.981569
@@ -549,30 +432,6 @@ bst = lgb_modelfit_nocv(params,
 #[800]   train's auc: 0.988366   valid's auc: 0.982993
 #[900]   train's auc: 0.988544   valid's auc: 0.983015
 
-
-gc.collect()
-imp = pd.DataFrame([(a,b) for (a,b) in zip(bst.feature_name(), bst.feature_importance())], columns = ['feat', 'imp'])
-imp = imp.sort_values('imp', ascending = False).reset_index(drop=True)
-print(imp)
-
-if not validation:
-    print("Predicting...")
-    sub['is_attributed'] = bst.predict(test_df[predictors])
-    print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb0704.csv.gz',index=False, compression = 'gzip')
-    print("done...")
-    print(sub.info())
-else:
-    max_ip = 126413
-    preds =   bst.predict(test_df[predictors])
-    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
-    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-    idx = test_df['ip']<=max_ip
-    fpr1, tpr1, thresholds1 = metrics.roc_curve(test_df[idx]['is_attributed'].values, preds[idx], pos_label=1)
-    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
-    print("writing...")
-    predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
 
 #Early stopping, best iteration is:
 #[875]   train's auc: 0.988508   valid's auc: 0.983024
