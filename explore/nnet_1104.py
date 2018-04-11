@@ -89,7 +89,7 @@ embids = ['app', 'channel', 'device', 'os', 'hour', 'day', 'wday', 'qty', 'ip_ap
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
 # Generator
 def get_keras_data(dataset):
-    X = dict((col, np.array(dataset['app'])) for col in embids)
+    X = dict((col, np.array(dataset[col])) for col in embids)
     return X
 
 in_app = Input(shape=[1], name = 'app')
@@ -125,7 +125,14 @@ model.summary()
 
 train_df = get_keras_data(train_df)
 class_weight = {0:.01,1:.99} # magic
-model.fit(train_df, y_train, batch_size=batch_size, epochs=2, class_weight=class_weight, shuffle=True, verbose=2)
+model.fit(train_df, 
+          y_train, 
+          batch_size=batch_size, 
+          epochs=2, 
+          class_weight=class_weight, 
+          shuffle=True, 
+          verbose=2)
+
 del train_df, y_train; gc.collect()
 model.save_weights('imbalanced_data.h5')
 
