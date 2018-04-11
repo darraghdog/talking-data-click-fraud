@@ -366,8 +366,8 @@ def df2ffmdf(df):
     return df
 
 
-interactions = ['os_channel', 'app_channel', 'app_device', 'app_os', 'ip_app']
-int_cols = ['app', 'device', 'os', 'channel', 'day_minute', 'ip']
+interactions = ['os_channel', 'app_channel', 'app_device', 'app_os']
+int_cols = ['app', 'device', 'os', 'channel', 'day_minute']
 logsm1_cols = ['qty', 'prevday_qty', 'prevhour_qty', 'count_in_next_ten_mins']
 
 logsm2_cols = ['click_sec_lead_chl', 'click_sec_lag_chl', 'click_sec_lag_os', \
@@ -421,7 +421,7 @@ fname_trn = path + '../weights/train_df%s.ffm'%(add_)
 chunk_write(train_df, fname_trn, 1000000)
 
 upsample_ratio = 5
-fname_trno = path + '../weights/train_osamp_df%s.ffm'%(add_)
+fname_trno = path + '../weights/train_df%s.ffm'%(add_)
 
 train_df_case = train_df[train_df['is_attributed']==1]
 train_df_case.shape

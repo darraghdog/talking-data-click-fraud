@@ -327,7 +327,7 @@ lead_cols = list(set(lead_cols))
 lead_cols = [v for v in lead_cols if v not in exclude_cols]
 
 target = 'is_attributed'
-predictors =  lead_cols
+predictors =  int_cols + logsm1_cols + logsm2_cols + logsm4_cols + numsm_cols 
 categorical = [ 'app','device','os', 'channel', 'hour'] #'channel_app',
 print(50*'*')
 print(predictors)

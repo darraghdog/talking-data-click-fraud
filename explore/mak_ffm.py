@@ -1,8 +1,18 @@
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Apr  9 20:38:22 2018
+import csv
+import os
+import time
+import gzip
 
-@author: dhanley2
-"""
+#path = '../input/'
+path = "/home/darragh/tdata/data/"
+path = '/Users/dhanley2/Documents/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
+start_time = time.time()
 
+fname_tst = path + '../weights/test_df%s.ffm.csv.gz'%(add_)
+fname_trn = path + '../weights/train_df%s.ffm.csv.gz'%(add_)
+
+
+for c,row in enumerate(csv.DictReader(gzip.open(fname_tst))):
+    
+    y = row[]
