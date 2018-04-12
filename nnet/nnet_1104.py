@@ -135,18 +135,32 @@ model.fit(train_df,
           verbose=1)
 
 del train_df, y_train; gc.collect()
-model.save_weights('imbalanced_data.h5')
-
-
-
+model.save_weights(path + '../weights/imbalanced_data.h5')
 sub = pd.DataFrame()
-sub['click_id'] = range(test_df.shape[0]) #test_df['click_id'].astype('int')
-test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
-test_df = get_keras_data(test_df)
 
-print("predicting....")
-sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
-del test_df; gc.collect()
-print("writing....")
-sub.to_csv('../sub/sub_nnet_1104.csv',index=False)
-
+if not validation:
+    print("Predicting...")
+    sub['click_id'] = test_df['click_id'].astype('int')
+    test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
+    test_df = get_keras_data(test_df)
+    sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
+    del test_df; gc.collect()
+    print("writing...")
+    sub.to_csv(path + '../sub/sub_lgb0704A.csv.gz',index=False, compression = 'gzip')
+    print("done...")
+    print(sub.info())
+else:
+    print("Predicting...")
+    sub['click_id'] = range(test_df.shape[0]) #test_df['click_id'].astype('int')
+    y_act = test_df['is_attributed'].values
+    test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
+    test_df = get_keras_data(test_df)
+    sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
+    
+    fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    idx = test_df['ip']<=max_ip
+    fpr1, tpr1, thresholds1 = metrics.roc_curve(y_act[idx], preds[idx], pos_label=1)
+    print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
+    print("writing...")
+    sub.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
