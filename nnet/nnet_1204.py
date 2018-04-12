@@ -44,8 +44,8 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
         df[col + '_bins']
         df[col][idx_] = nafillto
         df[col] = np.log(df[col]+0.1111111)
-        scaler = StandardScaler().fit(df[col])
-        df[col] = scaler.transform(df[col])
+        scaler = StandardScaler().fit(df[col].values)
+        df[col] = scaler.fit_transform(df[col].values)
         df.rename(columns={col: col+'_scale'}, inplace = True)
     return df
 
@@ -66,13 +66,21 @@ train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','a
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
-print('[{}] Load Features'.format(time.time() - start_time))
+print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp = pd.concat([pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip'), \
                     pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')])
 featapp = transform_lead(featapp)
-
+'''
+print('[{}] Load Entropy Features'.format(time.time() - start_time))
+featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
+featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
+featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
+featentip.columns
+featentip['ip_click_min_entropy'].hist()
+'''
 # featapp['click_sec_lead_scale'].hist()
 # featapp['click_sec_lead_bins'].hist()
+
 
 
 len_train = len(train_df)
