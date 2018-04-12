@@ -14,9 +14,11 @@ from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
 from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+from sklearn import metrics
+from sklearn.metrics import roc_auc_score
+#warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 #path = '../input/'
@@ -36,7 +38,8 @@ else:
     
     
 def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
-    for col in df.columns:
+    all_cols = df.columns
+    for col in all_cols :
         idx_ = df[col]==nafillfrom
         bins_ = bins
         df[col + '_bins'] = pd.qcut(df[col], q = bins_, labels = False, duplicates = 'drop')
@@ -44,12 +47,11 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
         df[col + '_bins']
         df[col][idx_] = nafillto
         df[col] = np.log(df[col]+0.1111111)
-        scaler = StandardScaler().fit(df[col].values.reshape(1, -1))
-        df[col] = scaler.fit_transform(df[col].values.reshape(1, -1))
+    scaler = StandardScaler()
+    df[all_cols] = scaler.fit_transform(df[all_cols])
+    for col in all_cols:
         df.rename(columns={col: col+'_scale'}, inplace = True)
     return df
-
-
 
 dtypes = {
         'ip'            : 'uint32',
@@ -70,23 +72,27 @@ print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp = pd.concat([pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip'), \
                     pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')])
 featapp = transform_lead(featapp)
-'''
+featapp.head()
+
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
-featentip.columns
-featentip['ip_click_min_entropy'].hist()
-'''
-# featapp['click_sec_lead_scale'].hist()
-# featapp['click_sec_lead_bins'].hist()
-
+scaler = MinMaxScaler()
+cols_ = [c for c in featentip.columns if c != 'ip']
+featentip[cols_] = scaler.fit_transform(featentip[cols_])
 
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
+print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp], axis = 1)
+print('[{}] Add entropy'.format(time.time() - start_time))
+train_df = train_df.merge(featentip, on=['ip'], how='left')
+train_df.head()
+
+train_df.isnull().sum()
 
 print('hour, day, wday....')
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
@@ -124,9 +130,14 @@ embids = ['app', 'channel', 'device', 'os', 'hour', 'day', 'wday', 'qty', 'ip_ap
 embids += [col for col in train_df.columns if '_bins' in col]
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
+
+cont_cols = [c for c in train_df.columns if 'entropy' in c]
+cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
 def get_keras_data(dataset):
     X = dict((col, np.array(dataset[col])) for col in embids)
+    for col in cont_cols:
+        X[col] = dataset[col].values
     return X
 
 # Dictionary of inputs
@@ -134,6 +145,7 @@ emb_n = 40
 dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
+cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
 emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
 fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
@@ -141,15 +153,15 @@ s_dout = SpatialDropout1D(0.2)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(100, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
-concat = concatenate([(fl1), (fl2)])
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
+concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
-model = Model(inputs=[inp for inp in emb_inputs.values()], outputs=outp)
+model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
 
-batch_size = 50000
-epochs = 2
+batch_size = 200000
+epochs = 20
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
 lr_init, lr_fin = 0.002, 0.0002
@@ -159,7 +171,7 @@ model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accu
 
 model.summary()
 
-from sklearn.metrics import roc_auc_score
+
 log = {'val_auc': []}
 class RocAucEvaluation(Callback):
     def __init__(self, validation_data=(), interval=1):
@@ -175,11 +187,11 @@ class RocAucEvaluation(Callback):
             print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
             log['val_auc'].append(score)
 
+train_df.keys()
 
-
-train_df = get_keras_data(train_df[embids])
+train_df = get_keras_data(train_df)
 if validation:
-    val_df = get_keras_data(test_df[embids])
+    val_df = get_keras_data(test_df)
     y_val = test_df['is_attributed'].values
     #RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
     
@@ -242,4 +254,8 @@ else:
     
 # Original 
 # 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
+
+#62080001/62080001 [==============================] - 594s 10us/step - loss: 0.0017 - acc: 0.9866 - val_loss: 0.0659 - val_acc: 0.9853
+#Epoch 2/2
+#62080001/62080001 [==============================] - 589s 9us/step - loss: 0.0014 - acc: 0.9887 - val_loss: 0.0613 - val_acc: 0.9868
 
