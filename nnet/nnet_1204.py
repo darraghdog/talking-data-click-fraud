@@ -15,6 +15,8 @@ from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 #path = '../input/'
@@ -41,9 +43,10 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
         df[col + '_bins'][idx_] = bins + 1
         df[col + '_bins']
         df[col][idx_] = nafillto
+        df[col] = np.log(df[col]+0.1111111)
         scaler = StandardScaler().fit(df[col])
         df[col] = scaler.transform(df[col])
-        df[col].rename(index=str, columns={col: col+'_scale'})
+        df.rename(columns={col: col+'_scale'}, inplace = True)
     return df
 
 
@@ -66,22 +69,16 @@ test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_useco
 print('[{}] Load Features'.format(time.time() - start_time))
 featapp = pd.concat([pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip'), \
                     pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')])
+featapp = transform_lead(featapp)
 
-
-
-
-
-
-
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots()
-feattrnapp['click_sec_lead'].hist(ax=ax, bins=100, bottom=0.1)
-ax.set_yscale('log')
+# featapp['click_sec_lead_scale'].hist()
+# featapp['click_sec_lead_bins'].hist()
 
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
+train_df = pd.concat([train_df, featapp], axis = 1)
 
 print('hour, day, wday....')
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
@@ -116,6 +113,7 @@ train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
 
 embids = ['app', 'channel', 'device', 'os', 'hour', 'day', 'wday', 'qty', 'ip_app_count', 'ip_app_os_count']
+embids += [col for col in train_df.columns if '_bins' in col]
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
 # Generator
@@ -124,7 +122,7 @@ def get_keras_data(dataset):
     return X
 
 # Dictionary of inputs
-emb_n = 50
+emb_n = 40
 dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
@@ -153,17 +151,57 @@ model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accu
 
 model.summary()
 
-train_df = get_keras_data(train_df)
+from sklearn.metrics import roc_auc_score
+log = {'val_auc': []}
+class RocAucEvaluation(Callback):
+    def __init__(self, validation_data=(), interval=1):
+        super(Callback, self).__init__()
+
+        self.interval = interval
+        self.X_val, self.y_val = validation_data
+
+    def on_epoch_end(self, epoch, logs={}):
+        if epoch % self.interval == 0:
+            y_pred = self.model.predict(self.X_val, verbose=0)
+            score = roc_auc_score(self.y_val, y_pred)
+            print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
+            log['val_auc'].append(score)
+
+
+
+train_df = get_keras_data(train_df[embids])
+if validation:
+    val_df = get_keras_data(test_df[embids])
+    y_val = test_df['is_attributed'].values
+    #RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
+    
 class_weight = {0:.01,1:.99} # magic
-model.fit(train_df, 
+
+
+if validation:
+    model.fit(train_df, 
+          y_train, 
+          batch_size=batch_size, 
+          epochs=2, 
+          class_weight=class_weight, 
+          #callbacks=[RocAuc, EarlyStopping()],
+          validation_data=(val_df, y_val),
+          shuffle=True, 
+          verbose=1
+          )
+    del train_df, val_df, y_val, y_train; gc.collect()
+else:
+    model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
           epochs=2, 
           class_weight=class_weight, 
           shuffle=True, 
-          verbose=1)
-
-del train_df, y_train; gc.collect()
+          verbose=1
+          )
+    del train_df, y_train; gc.collect()
+    
+    
 model.save_weights(path + '../weights/imbalanced_data.h5')
 sub = pd.DataFrame()
 
