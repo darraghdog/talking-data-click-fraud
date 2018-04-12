@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-path = '/home/ubuntu/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -44,8 +44,8 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
         df[col + '_bins']
         df[col][idx_] = nafillto
         df[col] = np.log(df[col]+0.1111111)
-        scaler = StandardScaler().fit(df[col].values)
-        df[col] = scaler.fit_transform(df[col].values)
+        scaler = StandardScaler().fit(df[col].values.reshape(1, -1))
+        df[col] = scaler.fit_transform(df[col].values.reshape(1, -1))
         df.rename(columns={col: col+'_scale'}, inplace = True)
     return df
 
