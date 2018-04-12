@@ -14,12 +14,12 @@ from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
 from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-path = '/home/ubuntu/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -49,6 +49,33 @@ print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
+
+print('[{}] Load Features'.format(time.time() - start_time))
+feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+
+
+
+for col in feattrnapp.columns:
+    idx_ = feattrnapp[col]==-1
+    bins = 50
+    feattrnapp[col + '_bins'] = pd.qcut(feattrnapp[col], q = bins, labels = False, duplicates = 'drop')
+    feattrnapp[col + '_bins'][idx_] = bins + 1
+    feattrnapp[col + '_bins']
+    scaler = StandardScaler().fit(feattrnapp[col])
+    a = scaler.transform(feattrnapp[col])
+
+
+StandardScaler(feattrnapp[col]).hist()
+
+
+feattrnapp['click_sec_lead'].hist()
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots()
+feattrnapp['click_sec_lead'].hist(ax=ax, bins=100, bottom=0.1)
+ax.set_yscale('log')
+
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
@@ -124,55 +151,17 @@ model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accu
 
 model.summary()
 
-from sklearn.metrics import roc_auc_score
-log = {'val_auc': []}
-class RocAucEvaluation(Callback):
-    def __init__(self, validation_data=(), interval=1):
-        super(Callback, self).__init__()
-
-        self.interval = interval
-        self.X_val, self.y_val = validation_data
-
-    def on_epoch_end(self, epoch, logs={}):
-        if epoch % self.interval == 0:
-            y_pred = self.model.predict(self.X_val, verbose=0)
-            score = roc_auc_score(self.y_val, y_pred)
-            print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
-            log['val_auc'].append(score)
-RocAuc = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
-
 train_df = get_keras_data(train_df)
-if validation:
-    val_df = get_keras_data(test_df.drop(['click_time','ip','is_attributed'],1))
-    y_val = test_df['is_attributed'].values
-    
 class_weight = {0:.01,1:.99} # magic
-
-
-if validation:
-    model.fit(train_df, 
-          y_train, 
-          batch_size=batch_size, 
-          epochs=2, 
-          class_weight=class_weight, 
-          callbacks=[RocAuc, EarlyStopping()],
-          validation_data=(val_df, y_val),
-          shuffle=True, 
-          verbose=1
-          )
-    del train_df, val_df, y_val, y_train; gc.collect()
-else:
-    model.fit(train_df, 
+model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
           epochs=2, 
           class_weight=class_weight, 
           shuffle=True, 
-          verbose=1
-          )
-    del train_df, y_train; gc.collect()
-    
-    
+          verbose=1)
+
+del train_df, y_train; gc.collect()
 model.save_weights(path + '../weights/imbalanced_data.h5')
 sub = pd.DataFrame()
 
