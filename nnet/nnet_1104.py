@@ -11,7 +11,7 @@ print ('neural network....')
 import tensorflow as tf
 from keras.layers import Input, Embedding, Dense, Flatten, Dropout, concatenate
 from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
-from keras.callbacks import Callback
+from keras.callbacks import Callback, EarlyStopping
 from keras.models import Model
 from keras.optimizers import Adam
 from sklearn.preprocessing import LabelEncoder
@@ -139,6 +139,7 @@ class RocAucEvaluation(Callback):
             score = roc_auc_score(self.y_val, y_pred)
             print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
             log['val_auc'].append(score)
+
 
 
 train_df = get_keras_data(train_df)

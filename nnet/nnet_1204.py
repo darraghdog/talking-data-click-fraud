@@ -16,6 +16,7 @@ from keras.models import Model
 from keras.optimizers import Adam
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
+
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
@@ -24,16 +25,28 @@ start_time = time.time()
 validation =  True
 if validation:
     add_ = 'val'
-    ntrees = 2000 # 200
-    early_stop = 100
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 900
     val_size = 10000
-    early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
+    
+    
+def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
+    for col in df.columns:
+        idx_ = df[col]==nafillfrom
+        bins_ = bins
+        df[col + '_bins'] = pd.qcut(df[col], q = bins_, labels = False, duplicates = 'drop')
+        df[col + '_bins'][idx_] = bins + 1
+        df[col + '_bins']
+        df[col][idx_] = nafillto
+        scaler = StandardScaler().fit(df[col])
+        df[col] = scaler.transform(df[col])
+        df[col].rename(index=str, columns={col: col+'_scale'})
+    return df
+
+
 
 dtypes = {
         'ip'            : 'uint32',
@@ -51,25 +64,14 @@ print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
 print('[{}] Load Features'.format(time.time() - start_time))
-feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+featapp = pd.concat([pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip'), \
+                    pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')])
 
 
 
-for col in feattrnapp.columns:
-    idx_ = feattrnapp[col]==-1
-    bins = 50
-    feattrnapp[col + '_bins'] = pd.qcut(feattrnapp[col], q = bins, labels = False, duplicates = 'drop')
-    feattrnapp[col + '_bins'][idx_] = bins + 1
-    feattrnapp[col + '_bins']
-    scaler = StandardScaler().fit(feattrnapp[col])
-    a = scaler.transform(feattrnapp[col])
 
 
-StandardScaler(feattrnapp[col]).hist()
 
-
-feattrnapp['click_sec_lead'].hist()
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
