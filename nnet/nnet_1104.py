@@ -5,9 +5,10 @@ import time
 import warnings
 warnings.filterwarnings('ignore')
 import os
-os.environ['OMP_NUM_THREADS'] = '4'
+#os.environ['OMP_NUM_THREADS'] = '4'
 import gc
 print ('neural network....')
+import tensorflow as tf
 from keras.layers import Input, Embedding, Dense, Flatten, Dropout, concatenate
 from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
 from keras.callbacks import Callback
@@ -18,7 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -57,6 +58,7 @@ print('hour, day, wday....')
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
 train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 train_df['wday']  = pd.to_datetime(train_df.click_time).dt.dayofweek.astype('uint8')
+
 print('grouping by ip-day-hour combination....')
 gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
 train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
@@ -73,8 +75,8 @@ print("vars and data type....")
 train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
-print("label encoding....")
 
+print("label encoding....")
 train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
 print ('final part of preparation....')
 test_df = train_df[len_train:]
@@ -92,7 +94,6 @@ def get_keras_data(dataset):
     X = dict((col, np.array(dataset[col])) for col in embids)
     return X
 
-in_app = Input(shape=[1], name = 'app')
 # Dictionary of inputs
 emb_n = 50
 dense_n = 1000
@@ -109,7 +110,7 @@ concat = concatenate([(fl1), (fl2)])
 x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
 x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
-model = Model(inputs=emb_inputs.values(), outputs=outp)
+model = Model(inputs=[inp for inp in emb_inputs.values()], outputs=outp)
 
 
 batch_size = 50000
@@ -131,7 +132,7 @@ model.fit(train_df,
           epochs=2, 
           class_weight=class_weight, 
           shuffle=True, 
-          verbose=2)
+          verbose=1)
 
 del train_df, y_train; gc.collect()
 model.save_weights('imbalanced_data.h5')
@@ -139,13 +140,13 @@ model.save_weights('imbalanced_data.h5')
 
 
 sub = pd.DataFrame()
-sub['click_id'] = test_df['click_id'].astype('int')
-test_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
+sub['click_id'] = range(test_df.shape[0]) #test_df['click_id'].astype('int')
+test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 test_df = get_keras_data(test_df)
 
 print("predicting....")
 sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
 del test_df; gc.collect()
 print("writing....")
-sub.to_csv('imbalanced_data.csv',index=False)
+sub.to_csv('../sub/sub_nnet_1104.csv',index=False)
 
