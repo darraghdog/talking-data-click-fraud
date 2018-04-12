@@ -22,7 +22,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -231,3 +231,7 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     sub.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
+    
+# Original 
+# 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
+
