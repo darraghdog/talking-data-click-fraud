@@ -139,12 +139,13 @@ class RocAucEvaluation(Callback):
             score = roc_auc_score(self.y_val, y_pred)
             print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
             log['val_auc'].append(score)
-RocAuc = RocAucEvaluation(validation_data=(X_val, y_val), interval=1)
+
 
 train_df = get_keras_data(train_df)
 if validation:
     val_df = get_keras_data(test_df.drop(['click_time','ip','is_attributed'],1))
     y_val = test_df['is_attributed'].values
+    RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
     
 class_weight = {0:.01,1:.99} # magic
 
