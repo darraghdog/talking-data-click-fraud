@@ -24,7 +24,7 @@ from sklearn.metrics import roc_auc_score
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -170,7 +170,7 @@ cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
 emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
 fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
-s_dout = SpatialDropout1D(0.2)(fe)
+s_dout = SpatialDropout1D(0.4)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(100, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
@@ -182,11 +182,11 @@ model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp i
 
 
 batch_size = 200000
-epochs = 20
+epochs = 3
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
-#lr_init, lr_fin = 0.002, 0.0002
-#lr_decay = exp_decay(lr_init, lr_fin, steps)
+lr_init, lr_fin = 0.0015, 0.0002
+lr_decay = exp_decay(lr_init, lr_fin, steps)
 optimizer_adam = Adam() #Adam(lr=0.002, decay=lr_decay)
 model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accuracy'])
 
@@ -223,22 +223,22 @@ if validation:
     model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
-          epochs=2, 
+          epochs=epochs, 
           class_weight=class_weight, 
           #callbacks=[RocAuc, EarlyStopping()],
           validation_data=(val_df, y_val),
           shuffle=True, 
-          verbose=1
+          verbose=2
           )
     del train_df, val_df, y_val, y_train; gc.collect()
 else:
     model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
-          epochs=2, 
+          epochs=epochs, 
           class_weight=class_weight, 
           shuffle=True, 
-          verbose=1
+          verbose=2
           )
     del train_df, y_train; gc.collect()
     
@@ -264,7 +264,7 @@ else:
     test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
     test_df = get_keras_data(test_df)
     sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
-    
+    preds = sub['is_attributed'].values    
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     idx = test_df['ip']<=max_ip
