@@ -155,13 +155,13 @@ cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
 emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
 fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
-s_dout = SpatialDropout1D(0.2)(fe)
+s_dout = SpatialDropout1D(0.4)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(100, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
 concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
@@ -276,5 +276,14 @@ else:
     Epoch 5/20
      - 693s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0554 - val_acc: 0.9863
     Epoch 6/20
+
+Drop out 0.3 and decrease lr to 0.3
+00:00:1e.0, compute capability: 3.7)
+ - 713s - loss: 0.0016 - acc: 0.9869 - val_loss: 0.0526 - val_acc: 0.9858
+Epoch 2/20
+ - 707s - loss: 0.0013 - acc: 0.9885 - val_loss: 0.0528 - val_acc: 0.9873
+Epoch 3/20
+ - 704s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0538 - val_acc: 0.9866
+
 '''
 
