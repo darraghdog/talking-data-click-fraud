@@ -98,6 +98,11 @@ cols_ = [c for c in featentip.columns if c != 'ip']
 featentip[cols_] = scaler.fit_transform(featentip[cols_])
 featentip[cols_] = featentip[cols_].astype(np.float16)
 
+
+train_df = train_df[-3000000:]
+
+
+
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
@@ -105,9 +110,6 @@ print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp, featspl, featctn], axis = 1)
 print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
-train_df.head()
-train_df.dtypes
-train_df.isnull().sum()
 
 print('[{}] hour, day, wday....'.format(time.time() - start_time))
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
@@ -136,7 +138,7 @@ train_df = pd.concat([train_df, train_dfnv], axis = 1)
 del train_dfnv; gc.collect()
 train_df.columns
 
-
+'''
 print('[{}] Get the outersections and label encode'.format(time.time() - start_time))
 for col in ['app','device','os', 'channel', 'hour']:
     print('outsersect cols : %s'%(col))
@@ -149,9 +151,10 @@ for col in ['app','device','os', 'channel', 'hour']:
     train_df[col] = le.transform(train_df[col])
     del col_intersect, outersect_, le, labels
     gc.collect()
+'''
 
 #print("label encoding....")
-#train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
+train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
 print('[{}] Split train/val'.format(time.time() - start_time))
 test_df = train_df[len_train:]
 train_df = train_df[:len_train]
