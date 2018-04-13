@@ -160,8 +160,8 @@ fl1 = Flatten()(s_dout)
 conv = Conv1D(100, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
 concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.3)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.3)(Dense(dense_n,activation='relu')(x))
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
@@ -172,7 +172,7 @@ exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
 lr_init, lr_fin = 0.002, 0.0002
 lr_decay = exp_decay(lr_init, lr_fin, steps)
-optimizer_adam = Adam(lr=0.002, decay=lr_decay)
+optimizer_adam = Adam() # Adam(lr=0.002, decay=lr_decay)
 model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accuracy'])
 
 model.summary()
@@ -264,4 +264,17 @@ else:
 #62080001/62080001 [==============================] - 594s 10us/step - loss: 0.0017 - acc: 0.9866 - val_loss: 0.0659 - val_acc: 0.9853
 #Epoch 2/2
 #62080001/62080001 [==============================] - 589s 9us/step - loss: 0.0014 - acc: 0.9887 - val_loss: 0.0613 - val_acc: 0.9868
+
+'''
+     - 701s - loss: 0.0015 - acc: 0.9871 - val_loss: 0.0550 - val_acc: 0.9868
+    Epoch 2/20
+     - 695s - loss: 0.0013 - acc: 0.9887 - val_loss: 0.0501 - val_acc: 0.9875
+    Epoch 3/20
+     - 694s - loss: 0.0012 - acc: 0.9888 - val_loss: 0.0592 - val_acc: 0.9847
+    Epoch 4/20
+     - 694s - loss: 0.0012 - acc: 0.9888 - val_loss: 0.0551 - val_acc: 0.9866
+    Epoch 5/20
+     - 693s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0554 - val_acc: 0.9863
+    Epoch 6/20
+'''
 
