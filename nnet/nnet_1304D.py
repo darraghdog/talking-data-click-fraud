@@ -99,15 +99,17 @@ featentip[cols_] = scaler.fit_transform(featentip[cols_])
 featentip[cols_] = featentip[cols_].astype(np.float16)
 
 
-train_df = train_df[-3000000:]
-
-
-
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
 print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp, featspl, featctn], axis = 1)
+
+
+len_train = 1000000
+train_df = train_df[:(len_train*2)]
+
+
 print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
 
@@ -178,6 +180,7 @@ cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
 def get_keras_data(dataset):
     X = dict((col, np.array(dataset[col])) for col in embids)
+    print(col)
     for col in cont_cols:
         X[col] = dataset[col].values
     return X
