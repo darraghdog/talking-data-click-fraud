@@ -14,11 +14,9 @@ from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
 from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 import warnings
-from sklearn import metrics
-from sklearn.metrics import roc_auc_score
-#warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 #path = '../input/'
@@ -37,6 +35,7 @@ else:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
     
     
+
 def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
     all_cols = df.columns
     for col in all_cols :
@@ -47,11 +46,14 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
         df[col + '_bins']
         df[col][idx_] = nafillto
         df[col] = np.log(df[col]+0.1111111)
-    scaler = StandardScaler()
+    
+    scaler = StandardScaler().fit(df[all_cols])
     df[all_cols] = scaler.fit_transform(df[all_cols])
     for col in all_cols:
         df.rename(columns={col: col+'_scale'}, inplace = True)
     return df
+
+
 
 dtypes = {
         'ip'            : 'uint32',
@@ -72,33 +74,29 @@ print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp = pd.concat([pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip'), \
                     pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')])
 featapp = transform_lead(featapp)
-featapp.head()
-
+'''
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
-scaler = MinMaxScaler()
-cols_ = [c for c in featentip.columns if c != 'ip']
-featentip[cols_] = scaler.fit_transform(featentip[cols_])
+featentip.columns
+featentip['ip_click_min_entropy'].hist()
+'''
+# featapp['click_sec_lead_scale'].hist()
+# featapp['click_sec_lead_bins'].hist()
+
 
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
-print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp], axis = 1)
-print('[{}] Add entropy'.format(time.time() - start_time))
-train_df = train_df.merge(featentip, on=['ip'], how='left')
-train_df.head()
-
-train_df.isnull().sum()
 
 print('hour, day, wday....')
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
 train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 train_df['wday']  = pd.to_datetime(train_df.click_time).dt.dayofweek.astype('uint8')
-
+'''
 print('grouping by ip-day-hour combination....')
 gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
 train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
@@ -115,7 +113,7 @@ print("vars and data type....")
 train_df['qty'] = train_df['qty'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
-
+'''
 print("label encoding....")
 train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
 print ('final part of preparation....')
@@ -125,49 +123,40 @@ y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
 train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
-
-embids = ['app', 'channel', 'device', 'os', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count']
+embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10} #, 'qty' : 50, 'ip_app_count':50, 'ip_app_os_count': 50}
+embids = ['app', 'channel', 'device', 'os', 'hour']#, 'qty', 'ip_app_count', 'ip_app_os_count']
 embids += [col for col in train_df.columns if '_bins' in col]
-embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 
-         'hour': 10, 'qty':30, 'ip_app_count':30, 'ip_app_os_count':30}
 for col in train_df.columns:
     if '_bins' in col:
-        embsz[col] = 30
-
+        embsz[col] = 30 
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-
-cont_cols = [c for c in train_df.columns if 'entropy' in c]
-cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
 def get_keras_data(dataset):
     X = dict((col, np.array(dataset[col])) for col in embids)
-    for col in cont_cols:
-        X[col] = dataset[col].values
     return X
 
 # Dictionary of inputs
-emb_n = 40
+emb_n = 50
 dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
-cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
-emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
+emb_model  = dict((col, Embedding(embmaxs[col], embsz[col])(emb_inputs[col])) for col in embids)
 fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
 s_dout = SpatialDropout1D(0.2)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(100, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
-concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.3)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.3)(Dense(dense_n,activation='relu')(x))
+concat = concatenate([(fl1), (fl2)])
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
-model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
+model = Model(inputs=[inp for inp in emb_inputs.values()], outputs=outp)
 
 
 batch_size = 200000
-epochs = 20
+epochs = 2
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
 lr_init, lr_fin = 0.002, 0.0002
@@ -177,7 +166,7 @@ model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accu
 
 model.summary()
 
-
+from sklearn.metrics import roc_auc_score
 log = {'val_auc': []}
 class RocAucEvaluation(Callback):
     def __init__(self, validation_data=(), interval=1):
@@ -193,11 +182,11 @@ class RocAucEvaluation(Callback):
             print("\n ROC-AUC - epoch: {:d} - score: {:.6f}".format(epoch+1, score))
             log['val_auc'].append(score)
 
-train_df.keys()
 
-train_df = get_keras_data(train_df)
+
+train_df = get_keras_data(train_df[embids])
 if validation:
-    val_df = get_keras_data(test_df)
+    val_df = get_keras_data(test_df[embids])
     y_val = test_df['is_attributed'].values
     #RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
     
@@ -208,22 +197,22 @@ if validation:
     model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
-          epochs=20, 
+          epochs=2, 
           class_weight=class_weight, 
           #callbacks=[RocAuc, EarlyStopping()],
           validation_data=(val_df, y_val),
           shuffle=True, 
-          verbose=2
+          verbose=1
           )
     del train_df, val_df, y_val, y_train; gc.collect()
 else:
     model.fit(train_df, 
           y_train, 
           batch_size=batch_size, 
-          epochs=20, 
+          epochs=2, 
           class_weight=class_weight, 
           shuffle=True, 
-          verbose=2
+          verbose=1
           )
     del train_df, y_train; gc.collect()
     
@@ -249,7 +238,7 @@ else:
     test_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
     test_df = get_keras_data(test_df)
     sub['is_attributed'] = model.predict(test_df, batch_size=batch_size, verbose=2)
-    preds = sub['is_attributed'].values
+    
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     idx = test_df['ip']<=max_ip
@@ -260,8 +249,4 @@ else:
     
 # Original 
 # 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
-
-#62080001/62080001 [==============================] - 594s 10us/step - loss: 0.0017 - acc: 0.9866 - val_loss: 0.0659 - val_acc: 0.9853
-#Epoch 2/2
-#62080001/62080001 [==============================] - 589s 9us/step - loss: 0.0014 - acc: 0.9887 - val_loss: 0.0613 - val_acc: 0.9868
 
