@@ -160,10 +160,9 @@ y_train = train_df['is_attributed'].values
 train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
 print('[{}] Create model'.format(time.time() - start_time))
-embids = ['app', 'channel', 'device', 'os', 'hour', 'qty', 'ip_app_count', 'ip_app_os_count']
+embids = ['app', 'channel', 'device', 'os', 'hour']
 embids += [col for col in train_df.columns if '_bins' in col]
-embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 
-         'hour': 10, 'qty':30, 'ip_app_count':30, 'ip_app_os_count':30}
+embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10}
 for col in train_df.columns:
     if '_bins' in col:
         embsz[col] = 25
