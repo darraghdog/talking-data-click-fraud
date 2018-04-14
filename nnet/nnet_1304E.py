@@ -26,7 +26,7 @@ path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
 path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
-validation =  True
+validation =  False
 if validation:
     add_ = 'val'
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
@@ -106,8 +106,8 @@ print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp, featspl, featctn], axis = 1)
 
 
-#len_train = 1000000
-#train_df = train_df[:(len_train*2)]
+len_train = 1000000
+train_df = train_df[:(len_train*2)]
 
 
 print('[{}] Add entropy'.format(time.time() - start_time))
@@ -238,6 +238,8 @@ if validation:
     val_df = get_keras_data(test_df)
     y_val = test_df['is_attributed'].values
     y_act = y_val
+else:
+    click_ids = test_df['click_id']
     #RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
 
 train_df = get_keras_data(train_df)
@@ -285,6 +287,7 @@ sub = pd.DataFrame()
 
 if not validation:    
     print('[{}] Build sub and write'.format(time.time() - start_time))
+    sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
     sub.to_csv(path + '../sub/sub_lgb0704A.csv.gz',index=False, compression = 'gzip')
