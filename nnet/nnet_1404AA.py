@@ -145,7 +145,6 @@ train_df = pd.concat([train_df, train_dfnv], axis = 1)
 del train_dfnv; gc.collect()
 train_df.columns
 
-'''
 print('[{}] Get the outersections and label encode'.format(time.time() - start_time))
 for col in ['app','device','os', 'channel', 'hour']:
     print('outsersect cols : %s'%(col))
@@ -159,11 +158,8 @@ for col in ['app','device','os', 'channel', 'hour']:
     del col_intersect, outersect_, le, labels
     gc.collect()
 
-
-'''
-
 #print("label encoding....")
-train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
+#train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEncoder().fit_transform)
 print('[{}] Split train/val'.format(time.time() - start_time))
 test_df = train_df[len_train:]
 train_df = train_df[:len_train]
@@ -215,9 +211,9 @@ model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp i
 #plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
 
 # Parameters
-batch_size   = 300000
-epochs       = 4
-blend_epochs = 2
+batch_size   = 200000
+epochs       = 5
+blend_epochs = 3
 
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
@@ -275,7 +271,7 @@ if validation:
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
             fpr, tpr, thresholds = metrics.roc_curve(y_act, predsls[-1], pos_label=1)
             print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'val'))
+            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'val'))
     preds = sum(predsls)/len(predsls)
 else:
     for i in range(epochs):
@@ -289,7 +285,7 @@ else:
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'full'))
+            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'full'))
     preds = sum(predsls)/len(predsls)
 
     
@@ -310,6 +306,6 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb1404Aval.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb1404val.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
