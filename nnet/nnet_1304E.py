@@ -40,6 +40,7 @@ else:
 def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
     all_cols = df.columns
     for col in all_cols :
+        print('Transform col : %s'%(col))
         idx_ = df[col]==nafillfrom
         bins_ = bins
         df[col + '_bins'] = pd.qcut(df[col], q = bins_, labels = False, duplicates = 'drop')
@@ -52,6 +53,7 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600):
     df[all_cols] = df[all_cols].astype(np.float32)
     for col in all_cols:
         df.rename(columns={col: col+'_scale'}, inplace = True)
+    gc.collect()
     return df
 
 dtypes = {
@@ -87,6 +89,7 @@ featctn = transform_lead(featctn)
 print('[{}] Load Previous Day Clicks'.format(time.time() - start_time))
 featprev  = pd.concat([pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), compression = 'gzip'),
                        pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip')])
+featprev.fillna(-1, inplace = True)
 featprev = transform_lead(featprev)
 
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
@@ -106,8 +109,8 @@ print('[{}] Concat Features'.format(time.time() - start_time))
 train_df = pd.concat([train_df, featapp, featspl, featctn], axis = 1)
 
 
-len_train = 1000000
-train_df = train_df[:(len_train*2)]
+#len_train = 1000000
+#train_df = train_df[:(len_train*2)]
 
 
 print('[{}] Add entropy'.format(time.time() - start_time))
