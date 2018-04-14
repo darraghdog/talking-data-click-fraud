@@ -26,7 +26,7 @@ from sklearn.metrics import roc_auc_score
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -174,26 +174,6 @@ train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
 embids += [col for col in train_df.columns if '_bins' in col]
-embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10}
-for col in train_df.columns:
-    if '_bins' in col:
-        embsz[col] = 25
-
-# get the max of each code type
-embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-
-cont_cols = [c for c in train_df.columns if 'entropy' in c]
-cont_cols += [c for c in train_df.columns if '_scale' in c]
-# Generator
-def get_keras_data(dataset):
-    X = dict((col, np.array(dataset[col])) for col in embids)
-    for col in cont_cols:
-        X[col] = dataset[col].values
-    return X
-
-print('[{}] Create model'.format(time.time() - start_time))
-embids = ['app', 'channel', 'device', 'os', 'hour']
-embids += [col for col in train_df.columns if '_bins' in col]
 # Make the size of the embeddings
 embsz = dict([(c, 100) if '_bins' in c else (c, 50) for c in embids])
 # get the max of each code type
@@ -333,23 +313,3 @@ else:
     sub.to_csv(path + '../sub/sub_lgb1404val.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
-    
-# Original 
-# 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
-
-'''
- - 701s - loss: 0.0017 - acc: 0.9848 - val_loss: 0.0571 - val_acc: 0.9857
-Epoch 2/20
- - 697s - loss: 0.0013 - acc: 0.9884 - val_loss: 0.0504 - val_acc: 0.9870
-Epoch 3/20
- - 697s - loss: 0.0013 - acc: 0.9886 - val_loss: 0.0497 - val_acc: 0.9872
-Epoch 4/20
- - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0555 - val_acc: 0.9863
-Epoch 5/20
- - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0453 - val_acc: 0.9878
-Epoch 6/20
- - 695s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0574 - val_acc: 0.9867
-Epoch 7/20
- - 694s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0481 - val_acc: 0.9872
-
-'''
