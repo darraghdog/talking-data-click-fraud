@@ -1,5 +1,6 @@
 Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
 __________________________________________________________________________________________________________________
+nnet_1304E.py              4 epochs, Avg last 2, v. wide                      0.982379              0.9814
 lgb_cts_0704.py            lead_count_next_ipdevosapp_t*  875      1000       0.983024              0.9813
 lgb_cts_0704A.py           lead_count_next_ipdevos_t*     875      900        0.983045              0.9812
 lgb_cts_0404.py            Remove device '3032'           1087     1087       0.982944              0.9812
