@@ -171,6 +171,7 @@ y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
 train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
+
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
 embids += [col for col in train_df.columns if '_bins' in col]
@@ -178,7 +179,7 @@ embids += [col for col in train_df.columns if '_bins' in col]
 embsz = dict([(c, 100) if '_bins' in c else (c, 50) for c in embids])
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-
+# Add the continuous inputs
 cont_cols = [c for c in train_df.columns if 'entropy' in c]
 cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
@@ -187,7 +188,6 @@ def get_keras_data(dataset):
     for col in cont_cols:
         X[col] = dataset[col].values
     return X
-
 # Dictionary of inputs
 dense_n1, dense_n2 = 1000, 100
 # Build the inputs, embeddings and concatenate them all for each column
@@ -210,9 +210,9 @@ x = Dropout(0.4)(Dense(dense_n2,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
-print('[{}] Plot the model'.format(time.time() - start_time))
-from keras.utils import plot_model
-plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
+#print('[{}] Plot the model'.format(time.time() - start_time))
+#from keras.utils import plot_model
+#plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
 
 # Parameters
 batch_size   = 200000
