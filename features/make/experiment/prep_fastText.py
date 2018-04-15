@@ -45,5 +45,5 @@ outfile.close()
 '''
 # Command line for fastText
 # After installing, from directory /fastText/build
-./fasttext skipgram -minCount 10000 -dim 5 -ws 7 -epoch 10 -thread 12 -input ../data.txt -output model
+./fasttext cbow -dim 50 -ws 15 -epoch 30 -thread 12 -input ../data.txt -output model
 '''
