@@ -84,26 +84,31 @@ test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_useco
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp1 = load_feat('../features/lead_lag_trn_ip_device_os_app')
+featapp1.columns = [col+'_app1' for col in featapp1.columns]
 featapp1 = transform_lead(featapp1, bins = 50, bin_it = True)
 print(featapp1.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp2 = load_feat('../features/lead_split_sec_trn_ip_device_os_app')
+featapp2.columns = [col+'_app2' for col in featapp2.columns]
 featapp2 = transform_lead(featapp2, bins = 50, bin_it = True)
 print(featapp2.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp3 = load_feat('../features/lead_split_sec_trn_ip_device_os_appchl')
+featapp3.columns = [col+'_app3' for col in featapp3.columns]
 featapp3 = transform_lead(featapp3, bins = 50, bin_it = True)
 print(featapp3.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp4 = load_feat('../features/lead_lag_trn_ip_device_os_channel')
+featapp4.columns = [col+'_app4' for col in featapp4.columns]
 featapp4 = transform_lead(featapp4, bins = 50, bin_it = True)
 print(featapp4.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp5 = load_feat('../features/lead_lag_trn_ip_device_os_channel_app')
+featapp5.columns = [col+'_app5' for col in featapp5.columns]
 featapp5 = transform_lead(featapp5, bins = 50, bin_it = True)
 print(featapp5.shape)
 
