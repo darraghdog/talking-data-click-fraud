@@ -26,7 +26,7 @@ from sklearn.metrics import roc_auc_score
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -46,16 +46,16 @@ def transform_lead(df, bins = 60, nafillfrom = -1, nafillto = 3600, bin_it = Tru
         idx_ = df[col]==nafillfrom
         if bin_it:
             bins_ = bins
-            df[col + '_bins'] = pd.qcut(df[col], q = bins_, labels = False, duplicates = 'drop')
-            df[col + '_bins'][idx_] = bins + 1
-            df[col + '_bins'] = df[col + '_bins'].astype(np.int32)
+            df[col + '__bins'] = pd.qcut(df[col], q = bins_, labels = False, duplicates = 'drop')
+            df[col + '__bins'][idx_] = bins + 1
+            df[col + '__bins'] = df[col + '__bins'].astype(np.int32)
         df[col][idx_] = nafillto
         df[col] = np.log(df[col]+0.1111111)
     scaler = StandardScaler()
     df[all_cols] = scaler.fit_transform(df[all_cols])
     df[all_cols] = df[all_cols].astype(np.float32)
     for col in all_cols:
-        df.rename(columns={col: col+'_scale'}, inplace = True)
+        df.rename(columns={col: col+'__scale'}, inplace = True)
     gc.collect()
     return df
 
@@ -88,7 +88,7 @@ featapp1 = transform_lead(featapp1, bins = 50, bin_it = False)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp2 = load_feat('../features/lead_split_sec_trn_ip_device_os_app')
-featapp2 = transform_lead(featapp2, bins = 50, bin_it = True)
+featapp2 = transform_lead(featapp2, bins = 50, bin_it = False)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp3 = load_feat('../features/lead_split_sec_trn_ip_device_os_appchl')
@@ -117,11 +117,11 @@ featctn1 = transform_lead(featctn1, bin_it = False)
 print('[{}] Load Lead Count next period ipdevos'.format(time.time() - start_time))
 featld2 = load_feat('../features/lead2_trn_ip_device_os_app')
 featld2 = transform_lead(featld2, bin_it = False)
-
+'''
 print('[{}] Level counts'.format(time.time() - start_time))
 featctr = load_feat('../features/counttrn')
 featctr = transform_lead(featctr, bin_it = False)
-
+'''
 print('[{}] Level counts'.format(time.time() - start_time))
 featcum = load_feat('../features/cum_min_trn_ip_device_os_app')
 featcum = transform_lead(featcum, bin_it = False)
@@ -138,15 +138,16 @@ featprev2 = transform_lead(featprev2, bin_it = False)
 
 
 feat =     pd.concat([featapp1, featapp2, featapp2, featapp3, featapp4, featspl, featctn, \
-        featctn1, featld2, featctr, featcum, featprev1, featprev2], axis = 1)
+        featctn1, featld2, featcum, featprev1, featprev2], axis = 1)
 del featapp1, featapp2, featapp3, featapp4, featapp5, featspl, featctn
-del featctn1, featld2, featctr, featcum, featprev1, featprev2
+del featctn1, featld2, featcum, featprev1, featprev2
 gc.collect()
 
 
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
 def scale_entropy(ffeat):
     cols_ = [c for c in ffeat.columns if c not in ['ip', 'os', 'device']]
+    print(cols_)
     colsid_ = [c for c in ffeat.columns if c in ['ip', 'os', 'device']]
     scaler = MinMaxScaler()
     ffeat[cols_] = scaler.fit_transform(ffeat[cols_])
@@ -179,7 +180,7 @@ print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
 train_df = train_df.merge(featentapp, on=['app'], how='left')
 train_df = train_df.merge(featentchl, on=['channel'], how='left')
-train_df = train_df.merge(featentipdevos, on=['ip, device, os'], how='left')
+train_df = train_df.merge(featentipdevos, on=['ip', 'device', 'os'], how='left')
 
 print('[{}] hour, day, wday....'.format(time.time() - start_time))
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
@@ -198,9 +199,9 @@ train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
-embids += [col for col in train_df.columns if '_bins' in col]
+embids += [col for col in train_df.columns if '__bins' in col]
 # Make the size of the embeddings
-embsz = dict([(c, 100) if '_bins' in c else (c, 50) for c in embids])
+embsz = dict([(c, 100) if '__bins' in c else (c, 50) for c in embids])
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
 # Add the continuous inputs
@@ -219,10 +220,10 @@ emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
 cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
 emb_model  = dict((col, Embedding(embmaxs[col], embsz[col], name= 'emb_'+col)(emb_inputs[col])) for col in embids)
 # Sum the embeddings of the continuous
-embbin_sum = L.Lambda(lambda x: K.sum(x, axis=0), name = 'emb_sum_binned_cols')([t for t in emb_model.values() if '_bins' in t.name])
-emb_model['emb_sum_binned_cols'] = embbin_sum
+#embbin_sum = L.Lambda(lambda x: K.sum(x, axis=0), name = 'emb_sum_binned_cols')([t for t in emb_model.values() if '__bins' in t.name])
+#emb_model['emb_sum_binned_cols'] = embbin_sum
 # Concat the sum of the contiuous with the categorical
-fe = concatenate([(emb_) for emb_ in emb_model.values() if not '_bins' in emb_.name])
+fe = concatenate([(emb_) for emb_ in emb_model.values() if not '__bins' in emb_.name])
 # Rest of the model
 s_dout = SpatialDropout1D(0.4)(fe)
 fl1 = Flatten()(s_dout)
@@ -325,7 +326,7 @@ if not validation:
     sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
-    sub.to_csv(path + '../sub/sub_lgb1404A.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet1404C.csv.gz',index=False, compression = 'gzip')
     print(sub.info())
     print('[{}] All done ...'.format(time.time() - start_time))
 else:
@@ -334,6 +335,6 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb1404val.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet1404Cval.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
