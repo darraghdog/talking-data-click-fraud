@@ -93,6 +93,7 @@ featapp2 = load_feat('../features/lead_split_sec_trn_ip_device_os_app')
 featapp2.columns = [col+'_app2' for col in featapp2.columns]
 featapp2 = transform_lead(featapp2, bins = 50, bin_it = True)
 print(featapp2.shape)
+print(featapp2.columns)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp3 = load_feat('../features/lead_split_sec_trn_ip_device_os_appchl')
@@ -156,7 +157,7 @@ print(featprev2.shape)
 
 
 
-feat =     pd.concat([featapp1, featapp2, featapp2, featapp3, featapp4, featspl, featctn, \
+feat =     pd.concat([featapp1, featapp2, featapp3, featapp4, featspl, featctn, \
         featctn1, featld2, featcum, featprev1, featprev2], axis = 1)
 del featapp1, featapp2, featapp3, featapp4, featapp5, featspl, featctn
 del featctn1, featld2, featcum, featprev1, featprev2
