@@ -65,6 +65,11 @@ dtypes = {
         'is_attributed' : 'uint8',
         'click_id'      : 'uint32'
         }
+
+test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=['click_time'])
+test_df['hour'] = pd.to_datetime(test_df.click_time).dt.hour.astype('uint8')
+test_df['hour'].value_counts()
+
 print('load train....')
 print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
@@ -121,6 +126,11 @@ train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
 train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
 train_df['wday']  = pd.to_datetime(train_df.click_time).dt.dayofweek.astype('uint8')
 
+print('[{}] Sample weights....'.format(time.time() - start_time))
+train_df['sample_weight'] = 0.6
+train_df['sample_weight'][train_df['hour'].isin([4, 5, 9, 10, 13, 14])] = 1.0
+
+
 print('[{}] grouping by ip-day-hour combination'.format(time.time() - start_time))
 gp = train_df[['ip','day','hour','channel']].groupby(by=['ip','day','hour'])[['channel']].count().reset_index().rename(index=str, columns={'channel': 'qty'})
 train_df = train_df.merge(gp, on=['ip','day','hour'], how='left')
@@ -163,6 +173,7 @@ train_df[['app','device','os', 'channel', 'hour', 'day', 'wday']].apply(LabelEnc
 print('[{}] Split train/val'.format(time.time() - start_time))
 test_df = train_df[len_train:]
 train_df = train_df[:len_train]
+samp_wt = train_df['sample_weight'].values
 y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
 train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
@@ -260,7 +271,8 @@ if validation:
               epochs=1, 
               class_weight=class_weight, 
               validation_data=(val_df, y_val),
-              shuffle=True, 
+              shuffle=True,
+              sample_weight = samp_wt,
               verbose=2)
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
@@ -277,6 +289,7 @@ else:
               epochs=1, 
               class_weight=class_weight, 
               shuffle=True, 
+              sample_weight = samp_wt,
               verbose=2)
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
