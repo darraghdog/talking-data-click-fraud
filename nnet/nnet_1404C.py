@@ -163,6 +163,8 @@ del featapp1, featapp2, featapp3, featapp4, featapp5, featspl, featctn
 del featctn1, featld2, featcum, featprev1, featprev2
 gc.collect()
 
+print(feat.head())
+print(feat.tail())
 
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
 def scale_entropy(ffeat):
@@ -261,7 +263,7 @@ model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp i
 # Parameters
 batch_size   = 200000
 epochs       = 4
-blend_epochs = 2
+blend_epochs = 4
 
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs

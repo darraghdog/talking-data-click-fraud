@@ -14,8 +14,6 @@ from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
 from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
-import keras.layers as L
-from keras import backend as K
 from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
 import warnings
 from sklearn import metrics
@@ -158,8 +156,6 @@ for col in ['app','device','os', 'channel', 'hour']:
     train_df[col] = le.transform(train_df[col])
     del col_intersect, outersect_, le, labels
     gc.collect()
-
-
 '''
 
 #print("label encoding....")
@@ -171,15 +167,17 @@ y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
 train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
-
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
 embids += [col for col in train_df.columns if '_bins' in col]
-# Make the size of the embeddings
-embsz = dict([(c, 100) if '_bins' in c else (c, 50) for c in embids])
+embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10}
+for col in train_df.columns:
+    if '_bins' in col:
+        embsz[col] = 25
+
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-# Add the continuous inputs
+
 cont_cols = [c for c in train_df.columns if 'entropy' in c]
 cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
@@ -188,34 +186,28 @@ def get_keras_data(dataset):
     for col in cont_cols:
         X[col] = dataset[col].values
     return X
+
 # Dictionary of inputs
-dense_n1, dense_n2 = 1000, 100
+emb_n = 40
+dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
 cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
-emb_model  = dict((col, Embedding(embmaxs[col], embsz[col], name= 'emb_'+col)(emb_inputs[col])) for col in embids)
-# Sum the embeddings of the continuous
-embbin_sum = L.Lambda(lambda x: K.sum(x, axis=0), name = 'emb_sum_binned_cols')([t for t in emb_model.values() if '_bins' in t.name])
-emb_model['emb_sum_binned_cols'] = embbin_sum
-# Concat the sum of the contiuous with the categorical
-fe = concatenate([(emb_) for emb_ in emb_model.values() if not '_bins' in emb_.name])
+emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
+fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
 s_dout = SpatialDropout1D(0.4)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(200, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
 concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.4)(Dense(dense_n1,activation='relu')(concat))
-x = Dropout(0.4)(Dense(dense_n2,activation='relu')(x))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
-#print('[{}] Plot the model'.format(time.time() - start_time))
-#from keras.utils import plot_model
-#plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
-
 # Parameters
-batch_size   = 300000
+batch_size   = 200000
 epochs       = 4
 blend_epochs = 2
 
@@ -250,7 +242,7 @@ if validation:
     y_val = test_df['is_attributed'].values
     y_act = y_val
 else:
-    click_ids = test_df['click_id'].astype(np.int32)
+    click_ids = test_df['click_id']
     #RocAuc = RocAucEvaluation(validation_data=(val_df, y_val), interval=1)
 
 train_df = get_keras_data(train_df)
@@ -275,7 +267,7 @@ if validation:
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
             fpr, tpr, thresholds = metrics.roc_curve(y_act, predsls[-1], pos_label=1)
             print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'val'))
+            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'val'))
     preds = sum(predsls)/len(predsls)
 else:
     for i in range(epochs):
@@ -289,7 +281,7 @@ else:
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'full'))
+            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'full'))
     preds = sum(predsls)/len(predsls)
 
     
@@ -301,7 +293,7 @@ if not validation:
     sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
-    sub.to_csv(path + '../sub/sub_lgb1404A.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb0704A.csv.gz',index=False, compression = 'gzip')
     print(sub.info())
     print('[{}] All done ...'.format(time.time() - start_time))
 else:
@@ -310,6 +302,26 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb1404Aval.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
+    
+# Original 
+# 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
+
+'''
+ - 701s - loss: 0.0017 - acc: 0.9848 - val_loss: 0.0571 - val_acc: 0.9857
+Epoch 2/20
+ - 697s - loss: 0.0013 - acc: 0.9884 - val_loss: 0.0504 - val_acc: 0.9870
+Epoch 3/20
+ - 697s - loss: 0.0013 - acc: 0.9886 - val_loss: 0.0497 - val_acc: 0.9872
+Epoch 4/20
+ - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0555 - val_acc: 0.9863
+Epoch 5/20
+ - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0453 - val_acc: 0.9878
+Epoch 6/20
+ - 695s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0574 - val_acc: 0.9867
+Epoch 7/20
+ - 694s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0481 - val_acc: 0.9872
+
+'''

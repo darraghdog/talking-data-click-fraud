@@ -176,7 +176,7 @@ print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
 embids += [col for col in train_df.columns if '_bins' in col]
 # Make the size of the embeddings
-embsz = dict([(c, 100) if '_bins' in c else (c, 50) for c in embids])
+embsz = dict([(c, 300) if '_bins' in c else (c, 200) for c in embids])
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
 # Add the continuous inputs
@@ -215,9 +215,9 @@ model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp i
 #plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
 
 # Parameters
-batch_size   = 300000
-epochs       = 4
-blend_epochs = 2
+batch_size   = 150000
+epochs       = 10
+blend_epochs = 8
 
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
@@ -275,7 +275,7 @@ if validation:
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
             fpr, tpr, thresholds = metrics.roc_curve(y_act, predsls[-1], pos_label=1)
             print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'val'))
+            model.save_weights(path + '../weights/nnet_wts_1404Abig_epoch%s_%s.h5'%(i, 'val'))
     preds = sum(predsls)/len(predsls)
 else:
     for i in range(epochs):
@@ -289,7 +289,7 @@ else:
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
-            model.save_weights(path + '../weights/nnet_wts_1404A_epoch%s_%s.h5'%(i, 'full'))
+            model.save_weights(path + '../weights/nnet_wts_1404Abig_epoch%s_%s.h5'%(i, 'full'))
     preds = sum(predsls)/len(predsls)
 
     
@@ -301,7 +301,7 @@ if not validation:
     sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
-    sub.to_csv(path + '../sub/sub_lgb1404A.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb1404Abig.csv.gz',index=False, compression = 'gzip')
     print(sub.info())
     print('[{}] All done ...'.format(time.time() - start_time))
 else:
@@ -310,6 +310,6 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb1404Aval.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb1404Abigval.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
