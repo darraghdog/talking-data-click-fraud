@@ -84,39 +84,49 @@ test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_useco
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp1 = load_feat('../features/lead_lag_trn_ip_device_os_app')
-featapp1 = transform_lead(featapp1, bins = 50, bin_it = False)
+featapp1 = transform_lead(featapp1, bins = 50, bin_it = True)
+print(featapp1.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp2 = load_feat('../features/lead_split_sec_trn_ip_device_os_app')
-featapp2 = transform_lead(featapp2, bins = 50, bin_it = False)
+featapp2 = transform_lead(featapp2, bins = 50, bin_it = True)
+print(featapp2.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp3 = load_feat('../features/lead_split_sec_trn_ip_device_os_appchl')
-featapp3 = transform_lead(featapp3, bins = 50, bin_it = False)
+featapp3 = transform_lead(featapp3, bins = 50, bin_it = True)
+print(featapp3.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp4 = load_feat('../features/lead_lag_trn_ip_device_os_channel')
-featapp4 = transform_lead(featapp4, bins = 50, bin_it = False)
+featapp4 = transform_lead(featapp4, bins = 50, bin_it = True)
+print(featapp4.shape)
 
 print('[{}] Load Lead/Lag Features'.format(time.time() - start_time))
 featapp5 = load_feat('../features/lead_lag_trn_ip_device_os_channel_app')
-featapp5 = transform_lead(featapp5, bins = 50, bin_it = False)
+featapp5 = transform_lead(featapp5, bins = 50, bin_it = True)
+print(featapp5.shape)
 
 print('[{}] Load Lead/Lag Split Sec Features'.format(time.time() - start_time))
 featspl = load_feat('../features/lead_split_sec_trn_ip_device_os_app')
-featspl = transform_lead(featspl, bins = 200, nafillfrom = 999999.000000, nafillto = 3600, bin_it = False)
+featspl = transform_lead(featspl, bins = 200, nafillfrom = 999999.000000, nafillto = 3600, bin_it = True)
+print(featspl.shape)
 
 print('[{}] Load Lead Count next period'.format(time.time() - start_time))
 featctn = load_feat('../features/lead_count_next_ipdevosapp_trn')
-featctn = transform_lead(featctn, bin_it = False)
+featctn = transform_lead(featctn, bin_it = True)
+print(featctn.shape)
 
 print('[{}] Load Lead Count next period ipdevos'.format(time.time() - start_time))
 featctn1 = load_feat('../features/lead_count_next_ipdevos_trn')
-featctn1 = transform_lead(featctn1, bin_it = False)
+featctn1 = transform_lead(featctn1, bin_it = True)
+print(featctn1.shape)
 
 print('[{}] Load Lead Count next period ipdevos'.format(time.time() - start_time))
 featld2 = load_feat('../features/lead2_trn_ip_device_os_app')
-featld2 = transform_lead(featld2, bin_it = False)
+featld2 = transform_lead(featld2, bin_it = True)
+print(featld2.shape)
+
 '''
 print('[{}] Level counts'.format(time.time() - start_time))
 featctr = load_feat('../features/counttrn')
@@ -125,16 +135,20 @@ featctr = transform_lead(featctr, bin_it = False)
 print('[{}] Level counts'.format(time.time() - start_time))
 featcum = load_feat('../features/cum_min_trn_ip_device_os_app')
 featcum = transform_lead(featcum, bin_it = False)
+print(featcum.shape)
 
 print('[{}] Load Previous Day Clicks'.format(time.time() - start_time))
 featprev1 = load_feat('../features/prevqdayipchlqtytrn')
 featprev1.fillna(-1, inplace = True)
 featprev1 = transform_lead(featprev1, bin_it = False) 
+print(featprev1.shape)
 
 print('[{}] Load Previous Day Clicks'.format(time.time() - start_time))
 featprev2 = load_feat('../features/prevdayipchlqtytrn')
 featprev2.fillna(-1, inplace = True)
 featprev2 = transform_lead(featprev2, bin_it = False)
+print(featprev2.shape)
+
 
 
 feat =     pd.concat([featapp1, featapp2, featapp2, featapp3, featapp4, featspl, featctn, \
@@ -167,10 +181,11 @@ len_train = len(train_df)
 train_df=train_df.append(test_df)
 del test_df; gc.collect()
 print('[{}] Concat Features'.format(time.time() - start_time))
+print(train_df.shape)
+print(train_df.dtypes)
 train_df = pd.concat([train_df, feat], axis = 1)
-
-train_df.shape
-featentipdevos.head()
+print(train_df.shape)
+print(train_df.dtypes)
 
 #len_train = 1000000
 #train_df = train_df[:(len_train*2)]
@@ -181,6 +196,7 @@ train_df = train_df.merge(featentip, on=['ip'], how='left')
 train_df = train_df.merge(featentapp, on=['app'], how='left')
 train_df = train_df.merge(featentchl, on=['channel'], how='left')
 train_df = train_df.merge(featentipdevos, on=['ip', 'device', 'os'], how='left')
+print(train_df.shape)
 
 print('[{}] hour, day, wday....'.format(time.time() - start_time))
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
@@ -199,12 +215,15 @@ train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
 
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
-embids += [col for col in train_df.columns if '__bins' in col]
-# Make the size of the embeddings
-embsz = dict([(c, 100) if '__bins' in c else (c, 50) for c in embids])
+embids += [col for col in train_df.columns if '_bins' in col]
+embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10}
+for col in train_df.columns:
+    if '_bins' in col:
+        embsz[col] = 25
+
 # get the max of each code type
 embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-# Add the continuous inputs
+
 cont_cols = [c for c in train_df.columns if 'entropy' in c]
 cont_cols += [c for c in train_df.columns if '_scale' in c]
 # Generator
@@ -213,36 +232,30 @@ def get_keras_data(dataset):
     for col in cont_cols:
         X[col] = dataset[col].values
     return X
+
 # Dictionary of inputs
-dense_n1, dense_n2 = 1000, 100
+emb_n = 40
+dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
 cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
-emb_model  = dict((col, Embedding(embmaxs[col], embsz[col], name= 'emb_'+col)(emb_inputs[col])) for col in embids)
-# Sum the embeddings of the continuous
-#embbin_sum = L.Lambda(lambda x: K.sum(x, axis=0), name = 'emb_sum_binned_cols')([t for t in emb_model.values() if '__bins' in t.name])
-#emb_model['emb_sum_binned_cols'] = embbin_sum
-# Concat the sum of the contiuous with the categorical
-fe = concatenate([(emb_) for emb_ in emb_model.values() if not '__bins' in emb_.name])
+emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
+fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
 s_dout = SpatialDropout1D(0.4)(fe)
 fl1 = Flatten()(s_dout)
 conv = Conv1D(200, kernel_size=4, strides=1, padding='same')(s_dout)
 fl2 = Flatten()(conv)
 concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.4)(Dense(dense_n1,activation='relu')(concat))
-x = Dropout(0.4)(Dense(dense_n2,activation='relu')(x))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.4)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
-#print('[{}] Plot the model'.format(time.time() - start_time))
-#from keras.utils import plot_model
-#plot_model(model, to_file=path+'../nnet/plot/model_nnet1404A.png', show_shapes = True)
-
 # Parameters
 batch_size   = 200000
-epochs       = 5
-blend_epochs = 3
+epochs       = 4
+blend_epochs = 2
 
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
@@ -252,7 +265,6 @@ optimizer_adam = Adam() #Adam(lr=0.002, decay=lr_decay)
 model.compile(loss='binary_crossentropy',optimizer=optimizer_adam,metrics=['accuracy'])
 
 model.summary()
-
 
 
 log = {'val_auc': []}
