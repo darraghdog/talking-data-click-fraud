@@ -142,3 +142,15 @@ sed -n 175000000,181880000p lead_count_next_ipdevosapp_trn >> lead_count_next_ip
 gzip lead_count_next_ipdevosapp_trn
 gzip lead_count_next_ipdevosapp_trnval
 gzip lead_count_next_ipdevosapp_tstval
+
+# lead_count_next_ipdevos_trn
+gunzip lead_count_next_ipdevos_trn.gz
+sed -n 1,1p lead_count_next_ipdevos_trn > lead_count_next_ipdevos_trnval
+sed -n 60000000,122080000p lead_count_next_ipdevos_trn >> lead_count_next_ipdevos_trnval
+sed -n 1,1p lead_count_next_ipdevos_trn > lead_count_next_ipdevos_tstval
+sed -n 144710000,152400000p lead_count_next_ipdevos_trn >> lead_count_next_ipdevos_tstval
+sed -n 162000000,168300000p lead_count_next_ipdevos_trn >> lead_count_next_ipdevos_tstval
+sed -n 175000000,181880000p lead_count_next_ipdevos_trn >> lead_count_next_ipdevos_tstval
+gzip lead_count_next_ipdevos_trn
+gzip lead_count_next_ipdevos_trnval
+gzip lead_count_next_ipdevos_tstval
