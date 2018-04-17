@@ -72,7 +72,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -104,7 +104,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 1000
+    ntrees = 100 # 1000
     val_size = 10000
     early_stop = ntrees
     add_ = ''
@@ -131,6 +131,15 @@ feattrnprev  = pd.read_csv(path+'../features/prevdayipchlqtytrn%s.gz'%(add_), co
 feattstprev  = pd.read_csv(path+'../features/prevdayipchlqtytst%s.gz'%(add_), compression = 'gzip')#.astype(np.int32)
 feattrncum  = (pd.read_csv(path+'../features/cumsumday_trn%s.gz'%(add_), compression = 'gzip')*10000).astype(np.uint16)
 feattstcum  = (pd.read_csv(path+'../features/cumsumday_tst%s.gz'%(add_), compression = 'gzip')*10000).astype(np.uint16)
+feattrnchl = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
+feattstchl = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_channel%s.gz'%(add_), compression = 'gzip')
+feattrnos  = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os%s.gz'%(add_), compression = 'gzip')
+feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os%s.gz'%(add_), compression = 'gzip')
+# feattrncum = pd.read_csv(path+'../features/cum_min_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+# feattstcum = pd.read_csv(path+'../features/cum_min_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
+
 gc.collect()
 feattstprev.fillna(-1, inplace = True)
 feattrnprev = feattrnprev.astype(np.int32)
@@ -148,6 +157,9 @@ feattrnkan1 = pd.read_feather(path+'../features/feat_var_kanbertrn%s.feather'%(a
 feattstkan1 = pd.read_feather(path+'../features/feat_var_kanbertst%s.feather'%(add_))
 feattrnkan2 = pd.read_feather(path+'../features/feat_next_kanbertrn%s.feather'%(add_))
 feattstkan2 = pd.read_feather(path+'../features/feat_next_kanbertst%s.feather'%(add_))
+feattrnkan3 = pd.read_feather(path+'../features/feat_count_kanbertrn%s.feather'%(add_))
+feattstkan3 = pd.read_feather(path+'../features/feat_count_kanbertst%s.feather'%(add_))
+
 feattstkan2.dtypes
 
 
@@ -161,21 +173,21 @@ def sumfeat(df):
     return dfsum
 
 feattstapp.columns = feattrnapp.columns = [i+'_app' for i in feattrnapp.columns.tolist()]
-feattrn = pd.concat([feattrnapp, feattrnkan1, feattrnkan2], axis=1)
-feattst = pd.concat([feattstapp, feattstkan1, feattstkan2], axis=1)
+feattrn = pd.concat([feattrnapp, feattrnkan1, feattrnkan2, feattrnkan3], axis=1)
+feattst = pd.concat([feattstapp, feattstkan1, feattstkan2, feattstkan3], axis=1)
 
-del feattrnapp, feattrnkan1, feattrnkan2
-del feattstapp, feattstkan1, feattstkan2
+del feattrnapp, feattrnkan1, feattrnkan2, feattrnkan3
+del feattstapp, feattstkan1, feattstkan2, feattstkan3
 import gc
 gc.collect()
 
 clip_val = 3600*5
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
-feattrn = pd.concat([feattrn, feattrnld2, feattrnspl, feattrnsp1, feattrncum], axis=1)
-feattst = pd.concat([feattst, feattstld2, feattstspl, feattstsp1, feattstcum], axis=1)
-del feattrnld2, feattrnspl, feattrnsp1, feattrncum
-del feattstld2, feattstspl, feattstsp1, feattstcum
+feattrn = pd.concat([feattrn, feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2], axis=1)
+feattst = pd.concat([feattst, feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2], axis=1)
+del feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2
+del feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2
 gc.collect()
 print(train_df.shape)
 print(test_df.shape)
@@ -188,6 +200,8 @@ gc.collect()
 
 print(train_df.shape)
 print(test_df.shape)
+print(train_df.columns)
+print(test_df.columns)
 
 len_train = len(train_df)
 train_df=train_df.append(test_df)
@@ -243,8 +257,8 @@ print("test size : ", len(test_df))
 
 exclude_cols = ['same_next_app', 'same_next_chl']
 lead_cols = [col for col in train_df.columns if 'X' in col]
-lead_cols = [col for col in train_df.columns if 'click' in col]
-lead_cols = [col for col in train_df.columns if 'lead_' in col]
+lead_cols += [col for col in train_df.columns if 'Click' in col]
+lead_cols += [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'device_ct' in col]
@@ -271,7 +285,7 @@ if not validation:
     sub = pd.DataFrame()
     sub['click_id'] = test_df['click_id'].astype('int')
 else:
-    val_df = test_df.sample(frac=.25, replace=False, random_state=0)
+    val_df = test_df#.sample(frac=.25, replace=False, random_state=0)
     gc.collect()
     
 print('[{}] Drop features complete'.format(time.time() - start_time))
