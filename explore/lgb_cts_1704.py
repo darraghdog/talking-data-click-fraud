@@ -114,8 +114,6 @@ print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
-train_df['click_id'] = 1000000000 + np.array(train_df.shape[0])
-test_df['is_attributed'] = 0
 
 print('[{}] Load Features'.format(time.time() - start_time))
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
@@ -191,6 +189,8 @@ def sumfeat(df):
     return dfsum
 
 feattstapp.columns = feattrnapp.columns = [i+'_app' for i in feattrnapp.columns.tolist()]
+feattstchl.columns = feattrnchl.columns = [i+'_chl' for i in feattrnchl.columns.tolist()]
+feattstos.columns  = feattrnos.columns  = [i+'_os' for i in feattrnos.columns.tolist()]
 feattrn = pd.concat([feattrnapp, feattrnkan1, feattrnkan2, feattrnkan3], axis=1)
 feattst = pd.concat([feattstapp, feattstkan1, feattstkan2, feattstkan3], axis=1)
 
