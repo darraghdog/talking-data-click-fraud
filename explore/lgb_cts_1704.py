@@ -114,6 +114,8 @@ print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
+train_df['click_id'] = 1000000000 + np.array(train_df.shape[0])
+test_df['is_attributed'] = 0
 
 print('[{}] Load Features'.format(time.time() - start_time))
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
