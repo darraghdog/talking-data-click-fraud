@@ -26,7 +26,7 @@ path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
 path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
-validation =  False
+validation =  True
 if validation:
     add_ = 'val'
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
@@ -306,7 +306,7 @@ if not validation:
     sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
-    sub.to_csv(path + '../sub/sub_lgb0704A.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet1604A.csv.gz',index=False, compression = 'gzip')
     print(sub.info())
     print('[{}] All done ...'.format(time.time() - start_time))
 else:
@@ -315,7 +315,7 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet1604val.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
     
