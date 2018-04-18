@@ -10,10 +10,42 @@ path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
 chk_app = 23
-keep  = c("app", "device", "click_time", "is_attributed")
+keep  = c('ip', 'os', "app", "device", "click_time", "is_attributed")
 trndf = fread(paste0(path, 'train.csv'))
+tstdf = fread(paste0(path, 'test.csv'))
 trndf = trndf[, keep, with = F]
 gc(); gc()
+
+
+aggdf = trndf[, .(.N, sum(is_attributed)/.N), by =ip]
+aggdf[N>20][V2>0.5]
+ips_ = aggdf[N>10][V2>0.7]$ip
+
+377*0.973
+
+aggdf[ip==15195]
+tstdf[os==ips_]
+
+subl = fread(paste0(path, '../sub/sub_lgb0304C.csv'), skip = 1)
+hist(subl[tstdf$os==61]$V2)
+sum(subl$V2>0.95)
+
+for (ip_ in ips_) {
+  if(ip_ %in% tstdf$ip){
+    print(ip_)
+    idx1 = tstdf$ip==ip_
+    idx2 = trndf$ip==ip_
+    print(sum(subl$V2>mean(subl[idx1]$V2)) / mean(trndf$is_attributed))
+    print(nrow(subl[idx1]))
+    print(nrow(trndf[idx2]))
+    print(mean(subl[idx1]$V2))
+    print('--------------------------')
+  }
+}
+
+(sum(trndf$is_attributed)/10)/21
+
+
 trndf[, ct:= .N, by = app]
 nrow(trndf[device==3032]) # 692891
 trndf[, click_sec := as.numeric(fasttime::fastPOSIXct(click_time))]

@@ -49,22 +49,23 @@ print(train_df.shape)
 print(test_df.shape)
 test_df.head()
 
-print('Extracting new features...')
-train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
-train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
-train_df.drop('click_time', axis = 1, inplace = True)
-gc.collect()
-
 # Build features
 testidx = test_df['dataset'].values
 test_df.drop('dataset', axis = 1, inplace = True)
 len_train = len(train_df)
 train_df=train_df.append(test_df)
 
+
+print('Extracting new features...')
+train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('uint8')
+train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
+train_df.drop('click_time', axis = 1, inplace = True)
+gc.collect()
+
 del test_df
 gc.collect()
 train_df.shape
-train_df.head()
+train_df.tail()
 
 
 print('grouping by ip-day-hour combination...')
@@ -116,7 +117,12 @@ train_df.info()
 train_df['ip_tcount'] = train_df['ip_tcount'].astype('uint16')
 train_df['ip_app_count'] = train_df['ip_app_count'].astype('uint16')
 train_df['ip_app_os_count'] = train_df['ip_app_os_count'].astype('uint16')
-    
+for col in ['ip_tchan_count','ip_app_os_var','ip_app_channel_var_day', 'ip_app_channel_mean_hour']:   
+    train_df[col] = train_df[col].astype(np.float32)
+train_df['ip_tcount'].tail(5)
+train_df.dtypes
+
+
 predictors = ['ip_tcount', 'ip_tchan_count', 'ip_app_count',
               'ip_app_os_count', 'ip_app_os_var',
               'ip_app_channel_var_day','ip_app_channel_mean_hour']
@@ -125,7 +131,7 @@ print('predictors',predictors)
 train_df = train_df[predictors]
 gc.collect()
 
-'''
+
 feattst = train_df[len_train:]
 feattst = feattst[testidx==1]
 feattrn = train_df[:len_train]
@@ -143,4 +149,3 @@ feattstval.reset_index(drop=True, inplace = True)
 feattrnval.to_feather(path+'../features/feat_count_kanbertrnval.feather')
 feattstval.to_feather(path+'../features/feat_count_kanbertstval.feather')
 gc.collect()
-'''
