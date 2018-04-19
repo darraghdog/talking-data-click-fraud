@@ -94,7 +94,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = False
+validation = True
 save_df    = False
 load_df    = False
 if validation:
@@ -146,10 +146,13 @@ feattrnprev = feattrnprev.astype(np.int32)
 feattstprev = feattstprev.astype(np.int32)
 
 print('[{}] Load Entropy Features'.format(time.time() - start_time))
+featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip', dtype = dtypes)
+featentipdevos  = pd.read_csv(path+'../features/entropyipdevos.gz', compression = 'gzip', dtype = dtypes)
+cols_ = [c for c in featentip.columns if c not in dtypes.keys()]
+featentip[cols_] = featentip[cols_].astype(np.float32)
+cols_ = [c for c in featentipdevos.columns if c not in dtypes.keys()]
+featentipdevos[cols_] = featentipdevos[cols_].astype(np.float32)
 
-featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
-featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
-featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
 
 
 print('[{}] Load up the kanber features'.format(time.time() - start_time))
@@ -247,6 +250,7 @@ gc.collect()
 
 print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
+train_df = train_df.merge(featentipdevos, on=['ip', 'device', 'os'], how='left')
 train_df.head()
 
 
