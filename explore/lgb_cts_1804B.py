@@ -94,7 +94,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = False
+validation = True
 save_df    = False
 load_df    = False
 if validation:
@@ -139,8 +139,8 @@ feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os%s.gz'%(add_
 # feattstcum = pd.read_csv(path+'../features/cum_min_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattrnctsm = pd.read_csv(path+'../features/count_same_in_next_%s.gz'%(add_), compression = 'gzip')
-feattstctsm = pd.read_csv(path+'../features/count_same_in_next_%s.gz'%(add_), compression = 'gzip')
+feattrnctsm = pd.read_csv(path+'../features/count_same_in_next_trn%s.gz'%(add_), compression = 'gzip')
+feattstctsm = pd.read_csv(path+'../features/count_same_in_next_tst%s.gz'%(add_), compression = 'gzip')
 
 gc.collect()
 feattstprev.fillna(-1, inplace = True)
@@ -299,6 +299,7 @@ lead_cols += [col for col in train_df.columns if 'cumsum' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
 lead_cols += [col for col in train_df.columns if 'count_in_next_' in col]
+lead_cols += [col for col in train_df.columns if 'count_same_' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour']
 lead_cols = list(set(lead_cols))
 lead_cols = [v for v in lead_cols if v not in exclude_cols]
