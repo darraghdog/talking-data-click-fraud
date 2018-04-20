@@ -10,21 +10,30 @@ path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
 chk_app = 23
-keep  = c('ip', 'os', "app", "device", "click_time", "is_attributed")
+keep  = c('ip', 'os', "app", "device", "channel", "click_time", "is_attributed")
 trndf = fread(paste0(path, 'train.csv'))
 tstdf = fread(paste0(path, 'test.csv'))
 trndf = trndf[, keep, with = F]
 gc(); gc()
 
 
-aggdf = trndf[, .(.N, sum(is_attributed)/.N), by =ip]
-aggdf[N>20][V2>0.5]
+aggdf = trndf[, .(.N, sum(is_attributed)/.N), by =.(app,channel)]
+aggdf = aggdf[N>20][V2>0.5]
+
+tstdf$pred = subl$V2
+
+
+tsagg = merge(tstdf, aggdf, by.x = c("app", "channel"), by.y = c("app", "channel"), "inner")
+tsagg = tsagg[, .(.N, sum(V2)/.N), by =.(app,channel)]
+hist(tsagg $V2)
+
 ips_ = aggdf[N>10][V2>0.7]$ip
 
 377*0.973
 
-aggdf[ip==15195]
-tstdf[os==ips_]
+aggdf[ip==118524]
+trndf[ip==118524]
+tstdf[ip==118524]
 
 subl = fread(paste0(path, '../sub/sub_lgb0304C.csv'), skip = 1)
 hist(subl[tstdf$os==61]$V2)
