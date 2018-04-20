@@ -10,7 +10,7 @@ import gc
 print ('neural network....')
 import tensorflow as tf
 from keras.layers import Input, Embedding, Dense, Flatten, Dropout, concatenate
-from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D
+from keras.layers import BatchNormalization, SpatialDropout1D, Conv1D, Add, Average
 from keras.callbacks import Callback
 from keras.models import Model
 from keras.optimizers import Adam
@@ -24,7 +24,7 @@ from sklearn.metrics import roc_auc_score
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 validation =  True
 if validation:
@@ -145,7 +145,32 @@ test_df = train_df[len_train:]
 train_df = train_df[:len_train]
 y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
-train_df.drop(['click_time','ip','is_attributed'],1,inplace=True)
+train_df.drop(['click_time','is_attributed'],1,inplace=True)
+
+
+
+
+print('[{}] Read in fasttext pretrained for '.format(time.time() - start_time))
+mapper = {'app':'app', 'device': 'dev', 'channel': 'chl', 'os' : 'oss', 'ipp': 'ip'}
+
+EMBEDDING_FILE = path+'../fastText/build/model.vec'
+EMBEDDING_FILE = path+'../features/model.vec'
+def get_coefs(word,*arr): return word, np.asarray(arr, dtype='float32')
+embeddings_index = dict(get_coefs(*o.strip().split()) for o in open(EMBEDDING_FILE))
+embed_size = 50
+embedding_matrix = {}
+embedding_max = {}
+
+for col in mapper.keys():
+    word_index = list(set(train_df[col].tolist() + test_df[col].tolist()))
+    embedding_max[col] = max(word_index)
+    embedding_matrix[col] = np.zeros((embedding_max[col]+1, embed_size))
+    for i in word_index:
+        word = mapper[col]+str(i)
+        embedding_vector = embeddings_index.get(word)
+        if embedding_vector is not None: 
+            embedding_matrix[col][i] = embedding_vector
+            
 
 print('[{}] Create model'.format(time.time() - start_time))
 embids = ['app', 'channel', 'device', 'os', 'hour']
@@ -167,23 +192,37 @@ def get_keras_data(dataset):
         X[col] = dataset[col].values
     return X
 
+# Fasttext layer
+ftext_inputs = dict(([( k ,Input([1], name = 'ftext_input_'+k)) for k in mapper.keys()]))
+ftext_emb    = dict(([( k , Embedding(embedding_max[k]+1, embed_size \
+                         , weights = [embedding_matrix[k]], trainable = False)(ftext_inputs[k] )) \
+                            for k in mapper.keys()]))
+ftext_emb_avg = Average(name = 'ftext_layers_average')([ (emb) for emb in ftext_emb.values() ])
+ftext_dense = Dense(20, activation="relu", name = 'dense_fttext')(ftext_emb_avg)
+ftext_dense = Dropout(0.2, name = 'dropout_fttext')(ftext_dense)
+
+# Continuous Inputs
+cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
+cont_concat = concatenate([(c_inp) for c_inp in cont_inputs.values()])
+cont_dense = Dense(20, activation="relu", name = 'dense_continuous')(cont_concat)
+cont_dense = Dropout(0.2, name = 'dropout_continuous')(cont_dense)
+
 # Dictionary of inputs
 emb_n = 40
 dense_n = 1000
 # Build the inputs, embeddings and concatenate them all for each column
 emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
-cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
 emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
 fe = concatenate([(emb_) for emb_ in emb_model.values()])
 # Rest of the model
-s_dout = SpatialDropout1D(0.4)(fe)
+s_dout = SpatialDropout1D(0.1)(fe)
 #fl1 = Flatten()(s_dout)
 conv_layers = dict(( ('conv'+str(i), Conv1D(200/i, kernel_size=2**i, strides=1, padding='same', name = 'conv'+str(i))(s_dout)) for i in range(2,6) ))
 flatten_layers = dict((  ('flatten_conv'+str(i), Flatten(name = 'flatten_conv'+str(i))(conv_layers['conv'+str(i)])    )  for i in range(2,6) ))
 #concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-concat = concatenate([(f_inp) for f_inp in flatten_layers.values()] + [(c_inp) for c_inp in cont_inputs.values()])
-x = Dropout(0.4)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.4)(Dense(dense_n,activation='relu')(x))
+concat = concatenate([(f_inp) for f_inp in flatten_layers.values()] + [cont_dense, ftext_dense])
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
 
