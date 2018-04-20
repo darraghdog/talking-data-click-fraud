@@ -3,6 +3,7 @@ import time
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import lightgbm as lgb
+import collections
 import gc
 from sklearn import metrics
 
@@ -139,8 +140,8 @@ feattstos  = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os%s.gz'%(add_
 # feattstcum = pd.read_csv(path+'../features/cum_min_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnld2 = pd.read_csv(path+'../features/lead2_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstld2 = pd.read_csv(path+'../features/lead2_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
-feattrnctsm = pd.read_csv(path+'../features/count_same_in_next_trn%s.gz'%(add_), compression = 'gzip')
-feattstctsm = pd.read_csv(path+'../features/count_same_in_next_tst%s.gz'%(add_), compression = 'gzip')
+#feattrnctsm = pd.read_csv(path+'../features/count_same_in_next_%s.gz'%(add_), compression = 'gzip')
+#feattstctsm = pd.read_csv(path+'../features/count_same_in_next_%s.gz'%(add_), compression = 'gzip')
 
 gc.collect()
 feattstprev.fillna(-1, inplace = True)
@@ -211,10 +212,10 @@ gc.collect()
 clip_val = 3600*5
 feattrn = feattrn.clip(-clip_val, clip_val).astype(np.int32)
 feattst = feattst.clip(-clip_val, clip_val).astype(np.int32)
-feattrn = pd.concat([feattrn, feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2, feattrnctsm], axis=1)
-feattst = pd.concat([feattst, feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2, feattstctsm], axis=1)
-del feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2, feattrnctsm
-del feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2, feattstctsm
+feattrn = pd.concat([feattrn, feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2], axis=1)
+feattst = pd.concat([feattst, feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2], axis=1)
+del feattrnspl, feattrnsp1, feattrncum, feattrnchl, feattrnos, feattrnld2#, feattrnctsm
+del feattstspl, feattstsp1, feattstcum, feattstchl, feattstos, feattstld2#, feattstctsm
 gc.collect()
 print(train_df.shape)
 print(test_df.shape)
@@ -264,24 +265,36 @@ train_df.drop(['click_time'], axis = 1, inplace = True)
 gc.collect()
 
 print('[{}] Get common train and test'.format(time.time() - start_time))
-for col in ['app', 'channel', 'os', 'hour', 'device']:  
+#for col in ['app', 'channel', 'os', 'hour', 'device']:  
+cut_offs = {'app': 5, 'channel':5, 'os':5, 'hour': 5, 'device':5, 'ip': 2000}
+for col, cut_ in cut_offs.items():  
     gc.collect()
     print('Get common to train and test : %s'%(col))
-    counts_ = train_df[col].value_counts().reset_index()
-    keepbig = counts_[counts_[col]>=5]['index']
-    common = pd.Series(list(set(train_df[col]) & set(test_df[col])))
-    keep = common #pd.Series(list(set(common).intersection(set(keepbig))))
-    train_df[col][~train_df[col].isin(keep)] = np.nan
-    test_df[col][~test_df[col].isin(keep)] = np.nan
-    val_df  [col][~val_df[col].isin(keep)] = np.nan
+    trnct = collections.Counter(train_df[col])
+    tstct = collections.Counter(test_df[col])
+    trnkeep = set([k for (k,v) in trnct.items() if v>cut_]) 
+    keep = [k for (k,v) in trnct.items() if (v>cut_) if k in trnkeep]
+    #counts_ = train_df[col].value_counts().reset_index()
+    #keepbig = counts_[counts_[col]>=5]['index']
+    #common = pd.Series(list(set(train_df[col]) & set(test_df[col])))
+    #pd.Series(list(set(common).intersection(set(keepbig))))
+    train_df[col][~train_df[col].isin(keep)] = 65535
+    test_df[col][~test_df[col].isin(keep)] = 65535
+    val_df  [col][~val_df[col].isin(keep)] = 65535
     print('Length remaining for %s : %s' %(col, len(train_df[col].unique())))
-    del common, keep, keepbig
+<<<<<<< HEAD
+    del trnct, tstsct, keep, trnkeep
+=======
+    del keep, trnct, tstct, trnkeep
+>>>>>>> 9e23a92340f95a1817531c56c9d98a37495da3ac
     gc.collect()
+'''
 for col in ['app', 'channel', 'os', 'hour', 'device']:
     train_df[col] = train_df[col].astype(np.float32)
     test_df [col] = test_df[col].astype(np.float32)
     val_df  [col] = val_df[col].astype(np.float32)
 gc.collect()
+'''
 
 print('[{}] Data split complete'.format(time.time() - start_time))
 print("train size: ", len(train_df))
@@ -299,7 +312,6 @@ lead_cols += [col for col in train_df.columns if 'cumsum' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
 lead_cols += [col for col in train_df.columns if 'count_in_next_' in col]
-lead_cols += [col for col in train_df.columns if 'count_same_' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour']
 lead_cols = list(set(lead_cols))
 lead_cols = [v for v in lead_cols if v not in exclude_cols]
