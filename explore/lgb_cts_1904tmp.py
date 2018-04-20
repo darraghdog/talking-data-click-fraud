@@ -282,7 +282,11 @@ for col, cut_ in cut_offs.items():
     test_df[col][~test_df[col].isin(keep)] = 65535
     val_df  [col][~val_df[col].isin(keep)] = 65535
     print('Length remaining for %s : %s' %(col, len(train_df[col].unique())))
+<<<<<<< HEAD
     del trnct, tstsct, keep, trnkeep
+=======
+    del keep, trnct, tstct, trnkeep
+>>>>>>> 9e23a92340f95a1817531c56c9d98a37495da3ac
     gc.collect()
 '''
 for col in ['app', 'channel', 'os', 'hour', 'device']:
