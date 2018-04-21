@@ -410,19 +410,4 @@ Auc for all hours in testval : 0.9821039979432484
 [12985.907825231552] Build sub and write
 Auc for all hours in testval : 0.9825260227056187
 
-
- - 701s - loss: 0.0017 - acc: 0.9848 - val_loss: 0.0571 - val_acc: 0.9857
-Epoch 2/20
- - 697s - loss: 0.0013 - acc: 0.9884 - val_loss: 0.0504 - val_acc: 0.9870
-Epoch 3/20
- - 697s - loss: 0.0013 - acc: 0.9886 - val_loss: 0.0497 - val_acc: 0.9872
-Epoch 4/20
- - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0555 - val_acc: 0.9863
-Epoch 5/20
- - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0453 - val_acc: 0.9878
-Epoch 6/20
- - 695s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0574 - val_acc: 0.9867
-Epoch 7/20
- - 694s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0481 - val_acc: 0.9872
-
 '''
