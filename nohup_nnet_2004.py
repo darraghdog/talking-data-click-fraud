@@ -1,0 +1,6 @@
+nohup: ignoring input
+neural network....
+Using TensorFlow backend.
+load train....
+[2.8848648071289062e-05] Load Train
+[33.48033833503723] Load Test

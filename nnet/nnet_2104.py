@@ -26,7 +26,8 @@ path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
 path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
-validation =  True
+validation =  False
+load_wts   =  False
 if validation:
     add_ = 'val'
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
@@ -147,85 +148,6 @@ y_train = train_df['is_attributed'].values
 # train_df.drop(['click_id', 'click_time','ip','is_attributed'],1,inplace=True)
 train_df.drop(['click_time','is_attributed'],1,inplace=True)
 
-
-
-'''
-print('[{}] Read in fasttext pretrained for '.format(time.time() - start_time))
-mapper = {'app':'app', 'device': 'dev', 'channel': 'chl', 'os' : 'oss', 'ip': 'ipp'}
-
-EMBEDDING_FILE = path+'../fastText/build/model.vec'
-EMBEDDING_FILE = path+'../features/model.vec'
-def get_coefs(word,*arr): return word, np.asarray(arr, dtype='float32')
-embeddings_index = dict(get_coefs(*o.strip().split()) for o in open(EMBEDDING_FILE))
-embed_size = 50
-embedding_matrix = {}
-embedding_max = {}
-
-for col in mapper.keys():
-    word_index = list(set(train_df[col].tolist() + test_df[col].tolist()))
-    embedding_max[col] = max(word_index)
-    embedding_matrix[col] = np.zeros((embedding_max[col]+1, embed_size))
-    for i in word_index:
-        word = mapper[col]+str(i)
-        embedding_vector = embeddings_index.get(word)
-        if embedding_vector is not None: 
-            embedding_matrix[col][i] = embedding_vector
-            
-print('[{}] Create model'.format(time.time() - start_time))
-embids = ['app', 'channel', 'device', 'os', 'hour']
-embids += [col for col in train_df.columns if '_bins' in col]
-embsz = {'app': 50, 'channel': 50, 'device':100, 'os': 50, 'hour': 10}
-for col in train_df.columns:
-    if '_bins' in col:
-        embsz[col] = 25
-
-# get the max of each code type
-embmaxs = dict((col, np.max([train_df[col].max(), test_df[col].max()])+1) for col in embids)
-
-cont_cols = [c for c in train_df.columns if 'entropy' in c]
-cont_cols += [c for c in train_df.columns if '_scale' in c]
-# Generator
-def get_keras_data(dataset):
-    X = dict((col, np.array(dataset[col])) for col in embids)
-    for col in cont_cols:
-        X[col] = dataset[col].values
-    return X
-
-# Fasttext layer
-ftext_inputs = dict(([( k ,Input([1], name = 'ftext_input_'+k)) for k in mapper.keys()]))
-ftext_emb    = dict(([( k , Embedding(embedding_max[k]+1, embed_size \
-                         , weights = [embedding_matrix[k]], trainable = False)(ftext_inputs[k] )) \
-                            for k in mapper.keys()]))
-ftext_emb_avg = Average(name = 'ftext_layers_average')([ (emb) for emb in ftext_emb.values() ])
-ftext_dense = Dense(20, activation="relu", name = 'dense_fttext')(ftext_emb_avg)
-ftext_dense = Dropout(0.2, name = 'dropout_fttext')(ftext_dense)
-
-# Continuous Inputs
-cont_inputs = dict((col, Input(shape=[1], name = col))  for col in cont_cols)
-cont_concat = concatenate([(c_inp) for c_inp in cont_inputs.values()])
-cont_dense = Dense(20, activation="relu", name = 'dense_continuous')(cont_concat)
-cont_dense = Dropout(0.2, name = 'dropout_continuous')(cont_dense)
-
-# Dictionary of inputs
-emb_n = 40
-dense_n = 1000
-# Build the inputs, embeddings and concatenate them all for each column
-emb_inputs = dict((col, Input(shape=[1], name = col))  for col in embids)
-emb_model  = dict((col, Embedding(embmaxs[col], emb_n)(emb_inputs[col])) for col in embids)
-fe = concatenate([(emb_) for emb_ in emb_model.values()])
-# Rest of the model
-s_dout = SpatialDropout1D(0.1)(fe)
-#fl1 = Flatten()(s_dout)
-conv_layers = dict(( ('conv'+str(i), Conv1D(int(200/i), kernel_size=2**i, strides=1, padding='same', name = 'conv'+str(i))(s_dout)) for i in range(2,6) ))
-flatten_layers = dict((  ('flatten_conv'+str(i), Flatten(name = 'flatten_conv'+str(i))(conv_layers['conv'+str(i)])    )  for i in range(2,6) ))
-#concat = concatenate([(fl1), (fl2)] + [(c_inp) for c_inp in cont_inputs.values()])
-concat = concatenate([(f_inp) for f_inp in flatten_layers.values()] + [cont_dense, ftext_dense])
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
-outp = Dense(1,activation='sigmoid')(x)
-model = Model(inputs=[inp for inp in emb_inputs.values()] + [(c_inp) for c_inp in cont_inputs.values()], outputs=outp)
-'''
-
 print('[{}] Read in fasttext pretrained for '.format(time.time() - start_time))
 mapper = {'app':'app',  'channel': 'chl', 'os' : 'oss', 'device': 'dev', 'ip': 'ipp'}
 
@@ -289,32 +211,22 @@ ftext_emb = dict(([( col , Embedding(embedding_max[col]+1, embed_size \
         , weights = [embedding_matrix[col]], trainable = False, name = 'emb_'+col) (emb_inputs[col]) ) for col in mapper.keys() if col != 'hour']))
 ftext_emb_avg = Average(name = 'ftext_layers_average')([ emb for emb in ftext_emb.values() ])
 ftext_dense = Dense(20, activation="relu", name = 'dense_fttext')(ftext_emb_avg)
-ftext_dense = Dropout(0.2, name = 'dropout_fttext')(ftext_dense)
+ftext_dense = Dropout(0.5, name = 'dropout_fttext')(ftext_dense)
 ftext_dense_flat = Flatten()(ftext_dense)
 
 concat = concatenate([(f_inp) for f_inp in flatten_layers.values()] + [cont_dense] + [ftext_dense_flat], name = 'concat_all')
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(concat))
-x = Dropout(0.2)(Dense(dense_n,activation='relu')(x))
+x = Dropout(0.5)(Dense(dense_n,activation='relu')(concat))
+x = Dropout(0.5)(Dense(dense_n,activation='relu')(x))
 outp = Dense(1,activation='sigmoid')(x)
 model = Model(inputs=[inp for inp in emb_inputs.values()] \
                       + [(c_inp) for c_inp in cont_inputs.values()] \
                       , outputs=outp)
 
 
-
-
-
-
-
-
-
-
-
-
 # Parameters
 batch_size   = 200000
-epochs       = 4
-blend_epochs = 2
+epochs       = 16
+blend_epochs = 6
 
 exp_decay = lambda init, fin, steps: (init/fin)**(1/(steps-1)) - 1
 steps = int(len(list(train_df)[0]) / batch_size) * epochs
@@ -356,6 +268,11 @@ predsls = []
 
 class_weight = {0:.01,1:.99} # magic
 
+if load_wts:
+    print('Start loading weights... ')
+    model.load_weights(path + '../weights/imbalanced_new_data_epoch5_val.h5')
+    print('Finished loading weights... ')
+
 print('[{}] Start fitting'.format(time.time() - start_time))
 if validation:
     for i in range(epochs):
@@ -372,7 +289,7 @@ if validation:
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
             fpr, tpr, thresholds = metrics.roc_curve(y_act, predsls[-1], pos_label=1)
             print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
-            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'val'))
+            model.save_weights(path + '../weights/imbalanced_new_data_epoch%s_%s.h5'%(i, 'val'))
     preds = sum(predsls)/len(predsls)
 else:
     for i in range(epochs):
@@ -386,7 +303,7 @@ else:
         if epochs - i <= blend_epochs:
             print('[{}] Predicting'.format(time.time() - start_time))
             predsls.append(model.predict(test_df, batch_size=batch_size, verbose=2))
-            model.save_weights(path + '../weights/imbalanced_data_epoch%s_%s.h5'%(i, 'full'))
+            model.save_weights(path + '../weights/imbalanced_new_data_epoch%s_%s.h5'%(i, 'full'))
     preds = sum(predsls)/len(predsls)
 
     
@@ -398,7 +315,7 @@ if not validation:
     sub['click_id'] = click_ids
     sub['is_attributed'] = preds
     del test_df; gc.collect()
-    sub.to_csv(path + '../sub/sub_lgb0704A.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet2104.csv.gz',index=False, compression = 'gzip')
     print(sub.info())
     print('[{}] All done ...'.format(time.time() - start_time))
 else:
@@ -407,14 +324,93 @@ else:
     fpr, tpr, thresholds = metrics.roc_curve(y_act, preds, pos_label=1)
     print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
     sub['is_attributed'] = preds
-    sub.to_csv(path + '../sub/sub_lgb0704val.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_nnet2104val.csv.gz',index=False, compression = 'gzip')
     print('[{}] All done ...'.format(time.time() - start_time))
 
     
-# Original 
-# 62080001/62080001 [==============================] - 699s 11us/step - loss: 0.0016 - acc: 0.9873 - val_loss: 0.0753 - val_acc: 0.9837
-
 '''
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1653s - loss: 0.0018 - acc: 0.9831 - val_loss: 0.0621 - val_acc: 0.9841
+[2710.3629014492035] Predicting
+Auc for all hours in testval : 0.9793536343267525
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1645s - loss: 0.0013 - acc: 0.9882 - val_loss: 0.0761 - val_acc: 0.9809
+[4736.373957633972] Predicting
+Auc for all hours in testval : 0.9805290910783289
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1643s - loss: 0.0013 - acc: 0.9882 - val_loss: 0.0610 - val_acc: 0.9859
+[6762.820173740387] Predicting
+Auc for all hours in testval : 0.9812532120454418
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1644s - loss: 0.0013 - acc: 0.9885 - val_loss: 0.0702 - val_acc: 0.9840
+[8788.164495706558] Predicting
+Auc for all hours in testval : 0.9816624187042491
+Epoch 1/1
+ - 1654s - loss: 0.0013 - acc: 0.9886 - val_loss: 0.0635 - val_acc: 0.9851
+[2716.219738483429] Predicting
+Auc for all hours in testval : 0.9818487311044605
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1642s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0562 - val_acc: 0.9863
+[4737.255086898804] Predicting
+Auc for all hours in testval : 0.9818090444173072
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1643s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0517 - val_acc: 0.9861
+[6761.805736541748] Predicting
+Auc for all hours in testval : 0.9819574520488112
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1644s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0628 - val_acc: 0.9838
+[8783.965024709702] Predicting
+Auc for all hours in testval : 0.9822190548443991
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1645s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0549 - val_acc: 0.9860
+[10808.76464676857] Predicting
+Auc for all hours in testval : 0.9818402743728009
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1644s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0524 - val_acc: 0.9864
+[12833.211520195007] Predicting
+Auc for all hours in testval : 0.9820943058694216
+Epoch 1/1
+ - 1653s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0521 - val_acc: 0.9864
+[2708.473333120346] Predicting
+Auc for all hours in testval : 0.982150598456587
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1645s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0597 - val_acc: 0.9858
+[4729.965117692947] Predicting
+Auc for all hours in testval : 0.9824420364241274
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1643s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0546 - val_acc: 0.9860
+[6749.066056966782] Predicting
+Auc for all hours in testval : 0.982298960056346
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1643s - loss: 0.0012 - acc: 0.9888 - val_loss: 0.0556 - val_acc: 0.9856
+[8769.922579526901] Predicting
+Auc for all hours in testval : 0.9819452411084867
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1643s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0604 - val_acc: 0.9872
+[10789.257677316666] Predicting
+Auc for all hours in testval : 0.9821027590998506
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/1
+ - 1644s - loss: 0.0012 - acc: 0.9888 - val_loss: 0.0515 - val_acc: 0.9871
+[12810.52698969841] Predicting
+Auc for all hours in testval : 0.9821039979432484
+[12985.907825231552] Build sub and write
+Auc for all hours in testval : 0.9825260227056187
+
+
  - 701s - loss: 0.0017 - acc: 0.9848 - val_loss: 0.0571 - val_acc: 0.9857
 Epoch 2/20
  - 697s - loss: 0.0013 - acc: 0.9884 - val_loss: 0.0504 - val_acc: 0.9870
