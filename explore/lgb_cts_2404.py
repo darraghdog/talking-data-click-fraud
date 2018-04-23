@@ -87,7 +87,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 save_df    = False
 load_df    = False
 if validation:
