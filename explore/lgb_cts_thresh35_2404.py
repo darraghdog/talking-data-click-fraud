@@ -90,6 +90,8 @@ ctdtypes = {
 validation = True
 save_df    = False
 load_df    = False
+difftime_threshold =35
+
 if validation:
     add_ = 'val'
     ntrees = 2000 # 200
@@ -111,7 +113,7 @@ idx = train_df['attributed_time'].notnull()
 click_time = pd.to_datetime(train_df[idx].click_time).astype(int)/(10**9)
 attrb_time = pd.to_datetime(train_df[idx].attributed_time).astype(int)/(10**9)
 diff_time  = attrb_time - click_time
-fullidx = train_df[idx][diff_time>40000].index
+fullidx = train_df[idx][diff_time>(difftime_threshold*1000)].index
 train_df['is_attributed'].iloc[fullidx] = 0
 train_df.drop('attributed_time', axis = 1, inplace = True)
 train_df.head()
@@ -375,7 +377,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2404.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb2404_difftime_thresh'+str(difftime_threshold)+'.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -388,8 +390,7 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb2404val.csv.gz',index=False, compression = 'gzip')
-
+    predsdf.to_csv(path + '../sub/sub_lgb2404val_difftime_thresh'+str(difftime_threshold)+'.csv.gz',index=False, compression = 'gzip')
 
 '''
 [10]    train's auc: 0.969362   valid's auc: 0.960889

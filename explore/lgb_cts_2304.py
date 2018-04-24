@@ -20,7 +20,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
         'max_bin': 255,  # Number of bucketed bin for feature values
         'subsample': 0.6,  # Subsample ratio of the training instance.
         'subsample_freq': 0,  # frequence of subsample, <=0 means no enable
-        'colsample_bytree': 0.3,  # Subsample ratio of columns when constructing each tree.
+        'colsample_bytree': 0.2,  # Subsample ratio of columns when constructing each tree.
         'min_child_weight': 5,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
         'subsample_for_bin': 200000,  # Number of samples for constructing bin
         'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
@@ -43,6 +43,13 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
                           feature_name=predictors,
                           categorical_feature=categorical_features
                           )
+    '''
+    xgtrain.save_binary(path + '../weights/train_lgb.bin')
+    xgtraindisk = lgb.Dataset(path + '../weights/train_lgb.bin', 
+                             feature_name=predictors, 
+                             categorical_feature=categorical,
+                             free_raw_data=False)
+    '''
     evals_results = {}
 
     bst1 = lgb.train(lgb_params, 
@@ -92,30 +99,19 @@ save_df    = False
 load_df    = False
 if validation:
     add_ = 'val'
-    ntrees = 2000 # 200
+    ntrees = 2500 # 200
     early_stop = 100
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 1251
+    ntrees = 1600
     val_size = 10000
     early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
 
 print('[{}] Load Train'.format(time.time() - start_time))
-train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed', 'attributed_time'])
-
-print('[{}] Remove late downloads'.format(time.time() - start_time))
-idx = train_df['attributed_time'].notnull()
-click_time = pd.to_datetime(train_df[idx].click_time).astype(int)/(10**9)
-attrb_time = pd.to_datetime(train_df[idx].attributed_time).astype(int)/(10**9)
-diff_time  = attrb_time - click_time
-fullidx = train_df[idx][diff_time>40000].index
-train_df['is_attributed'].iloc[fullidx] = 0
-train_df.drop('attributed_time', axis = 1, inplace = True)
-train_df.head()
-
+train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
@@ -149,8 +145,8 @@ feattstprev.fillna(-1, inplace = True)
 feattrnprev = feattrnprev.astype(np.int32)
 feattstprev = feattstprev.astype(np.int32)
 
-print('[{}] Load Entropy Features'.format(time.time() - start_time))
 
+print('[{}] Load Entropy Features'.format(time.time() - start_time))
 featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip')
 featentip.iloc[:,1:] = featentip.iloc[:,1:].astype(np.float32)
 featentip.iloc[:,0] = featentip.iloc[:,0].astype('uint32')
@@ -253,6 +249,12 @@ print('[{}] Add entropy'.format(time.time() - start_time))
 train_df = train_df.merge(featentip, on=['ip'], how='left')
 train_df.head()
 
+print('[{}] Add explicit device features'.format(time.time() - start_time))
+train_df['onehot_device0'] = (train_df['device']==0).astype(np.int8)
+train_df['onehot_device1'] = (train_df['device']==1).astype(np.int8)
+train_df['onehot_device2'] = (train_df['device']==2).astype(np.int8)
+train_df.head()
+
 
 print('[{}] Split data'.format(time.time() - start_time))
 test_df = train_df[len_train:]
@@ -293,6 +295,7 @@ print("test size : ", len(test_df))
 exclude_cols = ['same_next_app', 'same_next_chl']
 lead_cols = [col for col in train_df.columns if 'X' in col]
 lead_cols += [col for col in train_df.columns if 'Click' in col]
+lead_cols += [col for col in train_df.columns if 'onehot_' in col]
 lead_cols += [col for col in train_df.columns if 'lead_' in col]
 lead_cols += [col for col in train_df.columns if 'lag_' in col]
 lead_cols += [col for col in train_df.columns if 'next_' in col]
@@ -334,13 +337,13 @@ params = {
     'objective': 'binary',
     'learning_rate': 0.05,
     #'is_unbalance': 'true',  #because training data is unbalance (replaced with scale_pos_weight)
-    'num_leaves': 15,  # we should let it be smaller than 2^(max_depth)
+    'num_leaves': 25,  # we should let it be smaller than 2^(max_depth)
     'max_depth': 6,  # -1 means no limit
     #'min_child_samples': 10,  # Minimum number of data need in a child(min_data_in_leaf)
     'max_bin': 255,  # Number of bucketed bin for feature values
     'subsample': 0.90,  # Subsample ratio of the training instance.
     #'subsample_freq': 0,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.50,  # Subsample ratio of columns when constructing each tree.
+    'colsample_bytree': 0.2, # 0.50,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
     #'subsample_for_bin': 200000,  # Number of samples for constructing bin
     'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
@@ -375,7 +378,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2404.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb2304.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -388,176 +391,5 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb2404val.csv.gz',index=False, compression = 'gzip')
+    predsdf.to_csv(path + '../sub/sub_lgb2304val.csv.gz',index=False, compression = 'gzip')
 
-
-'''
-[10]    train's auc: 0.969362   valid's auc: 0.960889
-[20]    train's auc: 0.97306    valid's auc: 0.965649
-[30]    train's auc: 0.975      valid's auc: 0.968813
-[40]    train's auc: 0.977584   valid's auc: 0.972102
-[50]    train's auc: 0.97958    valid's auc: 0.974637
-[60]    train's auc: 0.981141   valid's auc: 0.976632
-[70]    train's auc: 0.982035   valid's auc: 0.977678
-[80]    train's auc: 0.982795   valid's auc: 0.978448
-[90]    train's auc: 0.983277   valid's auc: 0.978942
-[100]   train's auc: 0.98366    valid's auc: 0.979282
-[110]   train's auc: 0.983933   valid's auc: 0.979589
-[120]   train's auc: 0.984193   valid's auc: 0.979866
-[130]   train's auc: 0.984456   valid's auc: 0.980128
-[140]   train's auc: 0.984666   valid's auc: 0.9803
-[150]   train's auc: 0.984871   valid's auc: 0.980486
-[160]   train's auc: 0.985058   valid's auc: 0.980681
-[170]   train's auc: 0.985236   valid's auc: 0.980865
-[180]   train's auc: 0.985403   valid's auc: 0.981023
-[190]   train's auc: 0.985545   valid's auc: 0.981163
-[200]   train's auc: 0.985703   valid's auc: 0.98129
-[210]   train's auc: 0.985837   valid's auc: 0.981429
-[220]   train's auc: 0.985977   valid's auc: 0.981562
-[230]   train's auc: 0.986093   valid's auc: 0.981659
-[240]   train's auc: 0.986205   valid's auc: 0.981765
-[250]   train's auc: 0.986312   valid's auc: 0.981848
-[260]   train's auc: 0.9864     valid's auc: 0.981899
-[270]   train's auc: 0.98646    valid's auc: 0.981962
-[280]   train's auc: 0.986524   valid's auc: 0.981981
-[290]   train's auc: 0.986593   valid's auc: 0.982055
-[300]   train's auc: 0.986682   valid's auc: 0.982141
-[310]   train's auc: 0.986754   valid's auc: 0.982202
-[320]   train's auc: 0.986824   valid's auc: 0.98228
-[330]   train's auc: 0.986886   valid's auc: 0.982328
-[340]   train's auc: 0.986943   valid's auc: 0.982356
-[350]   train's auc: 0.986999   valid's auc: 0.982375
-[360]   train's auc: 0.987053   valid's auc: 0.98242
-[370]   train's auc: 0.987113   valid's auc: 0.982453
-[380]   train's auc: 0.987156   valid's auc: 0.982494
-[390]   train's auc: 0.987209   valid's auc: 0.982543
-[400]   train's auc: 0.987253   valid's auc: 0.982568
-[410]   train's auc: 0.98729    valid's auc: 0.982583
-[420]   train's auc: 0.987351   valid's auc: 0.982617
-[430]   train's auc: 0.987389   valid's auc: 0.982661
-[440]   train's auc: 0.987424   valid's auc: 0.982667
-[450]   train's auc: 0.98746    valid's auc: 0.982715
-[460]   train's auc: 0.9875     valid's auc: 0.98274
-[470]   train's auc: 0.987525   valid's auc: 0.982764
-[480]   train's auc: 0.987559   valid's auc: 0.982788
-[490]   train's auc: 0.987588   valid's auc: 0.982797
-[510]   train's auc: 0.987665   valid's auc: 0.982812
-[520]   train's auc: 0.987696   valid's auc: 0.982839
-[530]   train's auc: 0.987723   valid's auc: 0.982849
-[540]   train's auc: 0.987755   valid's auc: 0.982861
-[550]   train's auc: 0.987786   valid's auc: 0.982866
-[560]   train's auc: 0.987809   valid's auc: 0.982875
-[570]   train's auc: 0.987837   valid's auc: 0.982892
-[580]   train's auc: 0.987867   valid's auc: 0.982897
-[590]   train's auc: 0.987894   valid's auc: 0.982928
-[600]   train's auc: 0.987919   valid's auc: 0.982946
-[610]   train's auc: 0.987944   valid's auc: 0.982976
-[620]   train's auc: 0.987965   valid's auc: 0.98297
-[630]   train's auc: 0.987988   valid's auc: 0.982962
-[640]   train's auc: 0.988012   valid's auc: 0.982967
-[650]   train's auc: 0.988039   valid's auc: 0.982973
-[660]   train's auc: 0.988063   valid's auc: 0.982993
-[670]   train's auc: 0.988091   valid's auc: 0.983011
-[680]   train's auc: 0.988122   valid's auc: 0.983018
-[690]   train's auc: 0.988147   valid's auc: 0.983031
-[700]   train's auc: 0.988173   valid's auc: 0.983032
-[710]   train's auc: 0.988197   valid's auc: 0.983026
-[720]   train's auc: 0.988221   valid's auc: 0.98303
-[730]   train's auc: 0.988243   valid's auc: 0.983032
-[740]   train's auc: 0.988277   valid's auc: 0.983041
-[750]   train's auc: 0.988301   valid's auc: 0.983037
-[760]   train's auc: 0.988317   valid's auc: 0.983037
-[770]   train's auc: 0.988335   valid's auc: 0.983045
-[780]   train's auc: 0.988357   valid's auc: 0.983051
-[790]   train's auc: 0.988374   valid's auc: 0.983073
-[800]   train's auc: 0.988397   valid's auc: 0.983075
-[810]   train's auc: 0.988419   valid's auc: 0.983091
-[820]   train's auc: 0.988447   valid's auc: 0.983112
-[830]   train's auc: 0.988468   valid's auc: 0.983102
-[840]   train's auc: 0.988482   valid's auc: 0.983112
-[850]   train's auc: 0.988507   valid's auc: 0.983118
-[860]   train's auc: 0.988527   valid's auc: 0.983113
-[870]   train's auc: 0.988546   valid's auc: 0.983119
-[880]   train's auc: 0.988568   valid's auc: 0.983113
-[890]   train's auc: 0.988586   valid's auc: 0.983106
-[900]   train's auc: 0.988606   valid's auc: 0.983109
-[910]   train's auc: 0.988628   valid's auc: 0.983115
-[920]   train's auc: 0.988646   valid's auc: 0.983104
-[930]   train's auc: 0.988665   valid's auc: 0.983113
-[940]   train's auc: 0.988686   valid's auc: 0.983118
-[950]   train's auc: 0.988707   valid's auc: 0.983121
-[960]   train's auc: 0.988727   valid's auc: 0.983126
-[970]   train's auc: 0.988744   valid's auc: 0.983115
-[980]   train's auc: 0.988764   valid's auc: 0.983111
-[990]   train's auc: 0.988782   valid's auc: 0.983118
-[1000]  train's auc: 0.9888     valid's auc: 0.983107
-[1010]  train's auc: 0.988818   valid's auc: 0.983105
-[1020]  train's auc: 0.988839   valid's auc: 0.983109
-[1030]  train's auc: 0.988853   valid's auc: 0.983113
-[1040]  train's auc: 0.988868   valid's auc: 0.983121
-[1050]  train's auc: 0.988885   valid's auc: 0.983126
-[1060]  train's auc: 0.988905   valid's auc: 0.983132
-[1080]  train's auc: 0.988945   valid's auc: 0.983147
-[1090]  train's auc: 0.988961   valid's auc: 0.983135
-[1100]  train's auc: 0.988981   valid's auc: 0.983143
-[1110]  train's auc: 0.988995   valid's auc: 0.983161
-[1120]  train's auc: 0.989007   valid's auc: 0.983155
-[1130]  train's auc: 0.989025   valid's auc: 0.983157
-[1140]  train's auc: 0.989039   valid's auc: 0.983154
-[1150]  train's auc: 0.989055   valid's auc: 0.98316
-[1160]  train's auc: 0.989073   valid's auc: 0.983079
-[1170]  train's auc: 0.989088   valid's auc: 0.983079
-[1180]  train's auc: 0.989101   valid's auc: 0.983077
-[1190]  train's auc: 0.989112   valid's auc: 0.983073
-[1200]  train's auc: 0.98913    valid's auc: 0.983078
-[1210]  train's auc: 0.989146   valid's auc: 0.983082
-[1220]  train's auc: 0.98916    valid's auc: 0.983074
-[1230]  train's auc: 0.989175   valid's auc: 0.98307
-[1240]  train's auc: 0.989184   valid's auc: 0.983074
-[1250]  train's auc: 0.989198   valid's auc: 0.98306
-Early stopping, best iteration is:
-[1151]  train's auc: 0.989055   valid's auc: 0.983164
-
-Model Report
-n_estimators :  1151
-auc: 0.9831636575402569
-                                feat   imp
-0                            channel  1564
-1                                 os  1081
-2                                app  1039
-3                               hour   769
-4           click_sec_lead_split_sec   272
-5                                 X8   143
-6                      ip_os_entropy   133
-7                                 X4   132
-8                  ip_device_entropy   127
-9                          nextClick   126
-10                ip_channel_entropy   102
-11               ip_click_hr_entropy    95
-12                               qty    94
-13                                X0    93
-14                    ip_app_entropy    86
-15                                X5    83
-16                 click_sec_lag_app    80
-17  click_sec_lead_split_sec_ip_only    78
-18                                X3    77
-19                                X1    73
-20                            device    72
-21                click_sec_lead_app    68
-22                                ip    66
-23             click_sec_lead_shift2    62
-24            count_in_next_ten_mins    61
-25                                X6    59
-26                  count_in_next_hr    55
-27              ip_click_min_entropy    36
-28                      prevhour_qty    33
-29                       prevday_qty    32
-30                          cumsum50    27
-31                          cumsum10    26
-32                                X7    25
-33                   nextClick_shift    21
-34                                X2    16
-Auc for all hours in testval : 0.9831636575402569
-Auc for select hours in testval : 0.9667742378443394
-writing...
-'''

@@ -43,6 +43,13 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
                           feature_name=predictors,
                           categorical_feature=categorical_features
                           )
+    '''
+    xgtrain.save_binary(path + '../weights/train_lgb.bin')
+    xgtraindisk = lgb.Dataset(path + '../weights/train_lgb.bin', 
+                             feature_name=predictors, 
+                             categorical_feature=categorical,
+                             free_raw_data=False)
+    '''
     evals_results = {}
 
     bst1 = lgb.train(lgb_params, 
@@ -92,30 +99,19 @@ save_df    = False
 load_df    = False
 if validation:
     add_ = 'val'
-    ntrees = 2000 # 200
+    ntrees = 2500 # 200
     early_stop = 100
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 1251
+    ntrees = 1600
     val_size = 10000
     early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
 
 print('[{}] Load Train'.format(time.time() - start_time))
-train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed', 'attributed_time'])
-
-print('[{}] Remove late downloads'.format(time.time() - start_time))
-idx = train_df['attributed_time'].notnull()
-click_time = pd.to_datetime(train_df[idx].click_time).astype(int)/(10**9)
-attrb_time = pd.to_datetime(train_df[idx].attributed_time).astype(int)/(10**9)
-diff_time  = attrb_time - click_time
-fullidx = train_df[idx][diff_time>40000].index
-train_df['is_attributed'].iloc[fullidx] = 0
-train_df.drop('attributed_time', axis = 1, inplace = True)
-train_df.head()
-
+train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
 print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
@@ -334,13 +330,13 @@ params = {
     'objective': 'binary',
     'learning_rate': 0.05,
     #'is_unbalance': 'true',  #because training data is unbalance (replaced with scale_pos_weight)
-    'num_leaves': 15,  # we should let it be smaller than 2^(max_depth)
+    'num_leaves': 25,  # we should let it be smaller than 2^(max_depth)
     'max_depth': 6,  # -1 means no limit
     #'min_child_samples': 10,  # Minimum number of data need in a child(min_data_in_leaf)
     'max_bin': 255,  # Number of bucketed bin for feature values
     'subsample': 0.90,  # Subsample ratio of the training instance.
     #'subsample_freq': 0,  # frequence of subsample, <=0 means no enable
-    'colsample_bytree': 0.50,  # Subsample ratio of columns when constructing each tree.
+    'colsample_bytree': 0.15, # 0.50,  # Subsample ratio of columns when constructing each tree.
     'min_child_weight': 0,  # Minimum sum of instance weight(hessian) needed in a child(leaf)
     #'subsample_for_bin': 200000,  # Number of samples for constructing bin
     'min_split_gain': 0,  # lambda_l1, lambda_l2 and min_gain_to_split to regularization
@@ -375,7 +371,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2404.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb1704.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -388,7 +384,7 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb2404val.csv.gz',index=False, compression = 'gzip')
+    predsdf.to_csv(path + '../sub/sub_lgb1704val.csv.gz',index=False, compression = 'gzip')
 
 
 '''

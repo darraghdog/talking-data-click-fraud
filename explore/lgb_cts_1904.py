@@ -72,7 +72,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -251,14 +251,13 @@ train_df.head()
 
 print('[{}] Bin split sec'.format(time.time() - start_time))
 def bin_it(df, cols_, bins = 40):
-    all_cols = df.columns
-    for col in all_cols :
+    for col in cols_ :
         print('Bin col : %s'%(col))
         df[col + '_bins'] = pd.qcut(df[col], q = bins, labels = False, duplicates = 'drop')
         df[col + '_bins'] = df[col + '_bins'].astype(np.int32)
     gc.collect()
     return df
-train_df = bin_it(train_df, 'click_sec_lead_split_sec')
+train_df = bin_it(train_df, ['click_sec_lead_split_sec'] )
 
 print('[{}] Split data'.format(time.time() - start_time))
 test_df = train_df[len_train:]

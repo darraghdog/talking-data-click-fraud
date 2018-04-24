@@ -282,11 +282,7 @@ for col, cut_ in cut_offs.items():
     test_df[col][~test_df[col].isin(keep)] = 65535
     val_df  [col][~val_df[col].isin(keep)] = 65535
     print('Length remaining for %s : %s' %(col, len(train_df[col].unique())))
-<<<<<<< HEAD
-    del trnct, tstsct, keep, trnkeep
-=======
     del keep, trnct, tstct, trnkeep
->>>>>>> 9e23a92340f95a1817531c56c9d98a37495da3ac
     gc.collect()
 '''
 for col in ['app', 'channel', 'os', 'hour', 'device']:
@@ -318,7 +314,7 @@ lead_cols = [v for v in lead_cols if v not in exclude_cols]
 
 target = 'is_attributed'
 predictors =  lead_cols
-categorical = [ 'app','device','os', 'channel', 'hour'] #'channel_app',
+categorical = ['ip',  'app','device','os', 'channel', 'hour'] #'channel_app',
 print(50*'*')
 print(predictors)
 print(50*'*')
@@ -386,7 +382,7 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb1804B.csv.gz',index=False, compression = 'gzip')
+    sub.to_csv(path + '../sub/sub_lgb1904.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
@@ -399,5 +395,5 @@ else:
     print('Auc for select hours in testval : %s'%(metrics.auc(fpr1, tpr1)))
     print("writing...")
     predsdf = pd.DataFrame(preds)
-    predsdf.to_csv(path + '../sub/sub_lgb1804Bval.csv.gz',index=False, compression = 'gzip')
+    predsdf.to_csv(path + '../sub/sub_lgb1904val.csv.gz',index=False, compression = 'gzip')
 
