@@ -20,28 +20,37 @@ path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
 
-sub1 = fread(paste0(path, "../sub/sub_lgb2404.csv"))[order(click_id)]
-sub2 = fread(paste0(path, "../sub/blend_lgb_nn_2subs_FULL_2 2.csv"))[order(click_id)]
-sub3 = fread(paste0(path, "../sub/sub_lgb2404_difftime_thresh35.csv"))[order(click_id)]
-sub1[, is_attributed := rnkr(is_attributed)]
-sub2[, is_attributed := rnkr(is_attributed)]
-sub3[, is_attributed := rnkr(is_attributed)]
-#sublg[, is_attributed := rnkr(is_attributed)]
-cor(sub1$is_attributed, sub2$is_attributed)
-# [1] 0.9850251
-cor(sub1$is_attributed, sub3$is_attributed)
-# [1] 0.9916751
-cor(sub2$is_attributed, sub3$is_attributed)
-# [1] 0.9823914
+sub99 = fread(paste0(path, "../sub/sub_lgb1704.csv"))[order(click_id)]
+sub40 = fread(paste0(path, "../sub/sub_lgb2404.csv"))[order(click_id)]
+sub35 = fread(paste0(path, "../sub/sub_lgb2404_difftime_thresh35.csv"))[order(click_id)]
+sub30 = fread(paste0(path, "../sub/sub_lgb2404_difftime_thresh30.csv"))[order(click_id)]
+sub25 = fread(paste0(path, "../sub/sub_lgb2404_difftime_thresh25.csv"))[order(click_id)]
+subnn = fread(paste0(path, "../sub/sub_nnet2104.csv"))[order(click_id)]
+subwb = fread(paste0(path, "../sub/wordbatch_fm_ftrl.csv"))[order(click_id)]
 
+sub99[, is_attributed := rnkr(is_attributed)]
+sub40[, is_attributed := rnkr(is_attributed)]
+sub35[, is_attributed := rnkr(is_attributed)]
+sub30[, is_attributed := rnkr(is_attributed)]
+sub25[, is_attributed := rnkr(is_attributed)]
+subnn[, is_attributed := rnkr(is_attributed)]
+subwb[, is_attributed := rnkr(is_attributed)]
 
-sub1
-sub2
-sub3
-all.equal(sub1$click_id, sub2$click_id)
+cor(sub25$is_attributed, sub99$is_attributed)
+cor(sub30$is_attributed, sub99$is_attributed)
+cor(sub35$is_attributed, sub99$is_attributed)
+cor(sub40$is_attributed, sub99$is_attributed)
+cor(subnn$is_attributed, sub99$is_attributed)
+cor(subwb$is_attributed, sub99$is_attributed)
 
-sub = sub1
-sub[, is_attributed := (0.5*sub2$is_attributed) + (0.3*sub1$is_attributed) + (0.2*sub3$is_attributed)]
-sub[, is_attributed := format(is_attributed, scientific = F) ]
-sub
-fwrite(sub, paste0(path, "../sub/sub_lgb2404__X30___sub_lgb2404_thresh35__X20____blend_lgb_nn_2subs_FULL_2__X50.csv"), row.names = F)
+sub = sub99
+sub[, is_attributed := (0.2*sub99$is_attributed +
+                          0.2*sub40$is_attributed + 
+                          0.2*sub35$is_attributed + 
+                          0.2*sub30$is_attributed +
+                          0.2*sub25$is_attributed)]
+
+cor(sub$is_attributed, subnn$is_attributed)
+cor(sub$is_attributed, subwb$is_attributed)
+
+fwrite(sub, paste0(path, "../sub/blend_lgb_thresh_25K_30K_35K_40K_100K.csv"), row.names = F)
