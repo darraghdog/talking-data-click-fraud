@@ -1,0 +1,40 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red255\green255\blue0;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgenericrgb\c100000\c100000\c0;\cssrgb\c0\c0\c0;}
+\margl1440\margr1440\vieww23780\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \cb2 Add entropy,\cb1 \
+\pard\pardeftab720\sl280\partightenfactor0
+
+\f1 \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 \
+print('[\{\}] Load Entropy Features'.format(time.time() - start_time))\
+featentip  = pd.read_csv(path+'../features/entropyip.gz', compression = 'gzip', dtype = dtypes)\
+featentipdevos  = pd.read_csv(path+'../features/entropyipdevos.gz', compression = 'gzip', dtype = dtypes)\
+cols_ = [c for c in featentip.columns if c not in dtypes.keys()]\
+featentip[cols_] = featentip[cols_].astype(np.float32)\
+cols_ = [c for c in featentipdevos.columns if c not in dtypes.keys()]\
+featentipdevos[cols_] = featentipdevos[cols_].astype(np.float32)\
+\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf3 print('[\{\}] Add entropy'.format(time.time() - start_time))\
+train_df = train_df.merge(featentip, on=['ip'], how='left')\
+train_df = train_df.merge(featentipdevos, on=['ip', 'device', 'os'], how='left')\
+train_df.head()\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf3 \
+\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf3 \cb2 Count same in next \cb1 \
+feattrnctsm = pd.read_csv(path+'../features/count_same_in_next_trn%s.gz'%(add_), compression = 'gzip')\
+feattstctsm = pd.read_csv(path+'../features/count_same_in_next_tst%s.gz'%(add_), compression = 'gzip')\
+\
+\cb2 Add Features to net and rerun\cb1 \
+\
+\cb2 Try adding word batch\
+\pard\pardeftab720\sl280\partightenfactor0
+\cf3 \cb1 \
+\cb2 Check other previous runs to see what helped\
+}

@@ -9,6 +9,27 @@ library(Hmisc)
 path = '~/tdata/data/'
 path = '/Users/dhanley2/Documents/tdata/data/'
 
+rnkr = function(vec){
+  dt = data.table(vec)
+  dt[, idx := 1:.N]
+  dt = dt[order(vec)]
+  dt[, rank := (1:.N)/.N]
+  rank = dt[order(idx)]$rank
+  return(rank)
+}
+
+tstdf = fread(paste0(path, 'test.csv'))
+tstdf = tstdf[, .(device)]
+sub = fread(paste0("/Users/dhanley2/Downloads/", "blend_lgb_nn_2subs_FULL_2.csv"))
+sub[, is_attributed:= rnkr(is_attributed)]
+hist(sub$is_attributed)
+hist(sub[tstdf$device==3]$is_attributed)
+sub[tstdf$device==3, is_attributed := (is_attributed/5)]
+hist(sub[tstdf$device==3]$is_attributed)
+hist(sub$is_attributed)
+
+
+
 chk_app = 23
 keep  = c('ip', 'os', "app", "device", "channel", "click_time", "is_attributed")
 trndf = fread(paste0(path, 'train.csv'))

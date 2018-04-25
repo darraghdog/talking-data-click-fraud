@@ -1,5 +1,7 @@
 Script                     Description                    ValIters FullIters  Val        Val lowIp  LB
 __________________________________________________________________________________________________________________
+lgb_cts_1704.py            Lgb taking giba's params                           0.983671              0.9820
+nnet/nnet_2204.py          Nnet with fasttext 16 epochs                       0.982526              0.9816
 nnet_1304E.py              4 epochs, Avg last 2, v. wide                      0.982379              0.9814
 lgb_cts_0704.py            lead_count_next_ipdevosapp_t*  875      1000       0.983024              0.9813
 lgb_cts_0704A.py           lead_count_next_ipdevos_t*     875      900        0.983045              0.9812
