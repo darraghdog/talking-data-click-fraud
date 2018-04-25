@@ -90,7 +90,7 @@ ctdtypes = {
 validation = False
 save_df    = False
 load_df    = False
-difftime_threshold = 35
+difftime_threshold = 20
 
 if validation:
     add_ = 'val'
