@@ -9,56 +9,96 @@ library(Hmisc)
 path = '~/tdata/data/'
 #path = '/Users/dhanley2/Documents/tdata/data/'
 
+keep  = c("click_time", "attributed_time", "is_attributed")
 trndf = fread(paste0(path, 'train.csv'))
+trndf = trndf[, keep, with = F]
+trndf[, click_sec := as.numeric(fasttime::fastPOSIXct(click_time))]
+trndf[, attributed_sec := as.numeric(fasttime::fastPOSIXct(attributed_time))]
+trndf[, click_hr := round(click_sec/3600)%%24]
+trndf[, click_day := round(click_sec/(3600*24))]
+trndf[, difftime := attributed_sec - click_sec]
+trndf[, .(max(difftime, na.rm = T), .N), keyby = click_hr]
+trndf[, .N,  by = click_day]
+trndf[click_day %in% 17479:17480, .(max(difftime, na.rm = T), .N), keyby = click_hr]
+
+trndf[,over40K:= as.integer(difftime>40000)]
+trndf[!is.na(difftime), .N, keyby = .(over40K)]
+View(trndf[!is.na(difftime), .N, keyby = .(click_hr, over40K)])
+
+
 tstdf = fread(paste0(path, 'test.csv'))
-tstdf[device %in% c()]
-
-trndf[, click_time := fasttime::fastPOSIXct(trndf$click_time)]
-trndf[, click_day := round(as.numeric(click_time)/(3600*24)%%31)]
-tstdf[, click_time := fasttime::fastPOSIXct(tstdf$click_time)]
-tstdf[, click_day := round(as.numeric(click_time)/(3600*24)%%31)]
-tstdf[, click_hour := round(as.numeric(click_time)/(3600))%%24]
-
-tstdf[, .(sum(device==9), .N), by=click_hour][order(click_hour)]
-
-# trndf[device==3032]
-
-aggdf = trndf[,.(.N, mean(is_attributed), sum(is_attributed), length(unique(os))), by = device]
-aggdf[N>10000]
-
-daydf = trndf[device %in% c(3032, 3542, 3866),.N, by = .(click_day, device)]
-daydf[order(device, click_day)]
-daydf = trndf[device %in% c(1,2,0),.N, by = .(click_day, device)]
-daydf[order(device, click_day)]
+tstdf = tstdf[, "click_time", with = F]
+tstdf[, click_sec := as.numeric(fasttime::fastPOSIXct(click_time))]
+tstdf[, click_hr := round(click_sec/3600)%%24]
+tstdf[, .N,  by = click_hr]
 
 
 
-tst_devs = tstdf[,.(.N, length(unique(os))), by = device][N>500]
-tst_devs
-setdiff(unique(tst_devs$device), unique(trndf$device))
-trndf[device %in% tst_devs$device,.(.N, mean(is_attributed), sum(is_attributed), length(unique(os))), by = device]
+trndf[!is.na(difftime)]
+trndf = fread(paste0(path, 'trainval.csv'))
+tstdf = fread(paste0(path, 'testval.csv'))
+trndf = trndf[, keep, with = F]
+gc(); gc()
+
+
+trndf[, ct_ipdevos := .N, by = .(ip, device, os)]
+trndf[, ct_devos := .N, by = .(device, os)]
+
+hist(trndf$ct_devos)
+hist(trndf$ct_ipdevos)
+
+idx = (trndf$ct_ipdevos < 11) & (trndf$ct_devos < 11) 
+table(cut2(trndf[idx]$ct_ipdevos, g = 30), trndf[idx]$is_attributed)
+table(cut2(trndf[idx]$ct_devos, g = 30),  trndf[idx]$is_attributed)
 
 
 
+aggdf = trndf[, .(.N, sum(is_attributed)/.N), by =.(app,channel)]
+aggdf = aggdf[N>20][V2>0.5]
+
+tstdf$pred = subl$V2
 
 
-trndf[, click_time := fasttime::fastPOSIXct(trndf$click_time)]
-trndf[, click_day := round(as.numeric(click_time)/(3600*24))]
-trndf = trndf[,.(click_day, click_time, device, is_attributed)]
-tstdf = tstdf[,.(click_time, device)]
+tsagg = merge(tstdf, aggdf, by.x = c("app", "channel"), by.y = c("app", "channel"), "inner")
+tsagg = tsagg[, .(.N, sum(V2)/.N), by =.(app,channel)]
+hist(tsagg $V2)
 
-table(trndf$click_day, trndf$device==3032)
+ips_ = aggdf[N>10][V2>0.7]$ip
 
-table(trndf[device==3032]$is_attributed)
-table(trndf[device!=3032]$is_attributed)
+377*0.973
+
+aggdf[ip==118524]
+trndf[ip==118524]
+tstdf[ip==118524]
+
+subl = fread(paste0(path, '../sub/sub_lgb0304C.csv'), skip = 1)
+hist(subl[tstdf$os==61]$V2)
+sum(subl$V2>0.95)
+
+for (ip_ in ips_) {
+  if(ip_ %in% tstdf$ip){
+    print(ip_)
+    idx1 = tstdf$ip==ip_
+    idx2 = trndf$ip==ip_
+    print(sum(subl$V2>mean(subl[idx1]$V2)) / mean(trndf$is_attributed))
+    print(nrow(subl[idx1]))
+    print(nrow(trndf[idx2]))
+    print(mean(subl[idx1]$V2))
+    print('--------------------------')
+  }
+}
+
+(sum(trndf$is_attributed)/10)/21
 
 
-table(tstdf$device==3032)
-
-sub = fread(paste0(path, '../sub/sub_lgb0304val.csv'))
-sub = sub[2:nrow(sub)]
-
-
+trndf[, ct:= .N, by = app]
+nrow(trndf[device==3032]) # 692891
+trndf[, click_sec := as.numeric(fasttime::fastPOSIXct(click_time))]
+trndf[, click_sec := click_sec - min(trndf$click_sec)]
+trndf[, click_day := round((click_sec)/(24*3600))]
+aggdf = trndf[ct>100000, .(mean(is_attributed), sum(is_attributed), .N), by = app]
+setnames(aggdf, c("app", "ymean", "ysum", "count"))
+aggdf = aggdf[order(ymean)]
 
 
 
