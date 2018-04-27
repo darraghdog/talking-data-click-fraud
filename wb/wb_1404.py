@@ -1,10 +1,11 @@
+# https://www.kaggle.com/anttip/talkingdata-wordbatch-fm-ftrl-lb-0-9752
 import sys
-
-#sys.path.insert(0, '../input/wordbatch-133/wordbatch/')
 #sys.path.insert(0, '../input/randomstate/randomstate/')
-import wordbatch
+import wordbatch as wb
 from wordbatch.extractors import WordHash
+from sklearn import metrics
 from wordbatch.models import FM_FTRL
+sys.path.insert(0, '/home/darragh/anaconda3/lib/python3.6/site-packages/Wordbatch-1.3.5-py3.6-linux-x86_64.egg/wordbatch')
 from wordbatch.data_utils import *
 import threading
 import pandas as pd
@@ -26,20 +27,9 @@ def cpuStats():
 	memoryUse = py.memory_info()[0] / 2. ** 30
 	print('memory GB:', memoryUse)
 
-#path = '../input/'
-path = "/home/darragh/tdata/data/"
-#path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
-
-start_time = time.time()
 mean_auc= 0
-validation = True
-if validation:
-    add_ = 'val'
-else:
-    add_ = ''
 
 def fit_batch(clf, X, y, w):  clf.partial_fit(X, y, sample_weight=w)
 
@@ -54,18 +44,11 @@ def evaluate_batch(clf, X, y, rcount):
 	print(rcount, "ROC AUC:", auc, "Running Mean:", mean_auc)
 	return auc
 
-def df_add_counts(df, cols, tag="_count"):
+def df_add_counts(df, cols):
 	arr_slice = df[cols].values
 	unq, unqtags, counts = np.unique(np.ravel_multi_index(arr_slice.T, arr_slice.max(0) + 1),
 									 return_inverse=True, return_counts=True)
-	df["_".join(cols)+tag] = counts[unqtags]
-	return df
-
-def df_add_uniques(df, cols, tag="_unique"):
-	gp = df[cols].groupby(by=cols[0:len(cols) - 1])[cols[len(cols) - 1]].nunique().reset_index(). \
-		rename(index=str, columns={cols[len(cols) - 1]: "_".join(cols)+tag})
-	df= df.merge(gp, on=cols[0:len(cols) - 1], how='left')
-	return df
+	df["_".join(cols)+'_count'] = counts[unqtags]
 
 def df2csr(wb, df, pick_hours=None):
 	df.reset_index(drop=True, inplace=True)
@@ -75,12 +58,12 @@ def df2csr(wb, df, pick_hours=None):
 		df['day'] = dt.day.astype('uint8')
 		df['hour'] = dt.hour.astype('uint8')
 		del(dt)
-		df= df_add_counts(df, ['ip', 'day', 'hour'])
-		df= df_add_counts(df, ['ip', 'app'])
-		df= df_add_counts(df, ['ip', 'app', 'os'])
-		df= df_add_counts(df, ['ip', 'device'])
-		df= df_add_counts(df, ['app', 'channel'])
-		df= df_add_uniques(df, ['ip', 'channel'])
+		df_add_counts(df, ['ip', 'day', 'hour'])
+		df_add_counts(df, ['ip', 'app'])
+		df_add_counts(df, ['ip', 'app', 'os'])
+		df_add_counts(df, ['ip', 'device'])
+		df_add_counts(df, ['app', 'channel'])
+		#cpuStats()
 
 	with timer("Adding next click times"):
 		D= 2**26
@@ -95,10 +78,8 @@ def df2csr(wb, df, pick_hours=None):
 		del(click_buffer)
 		df['next_click']= list(reversed(next_clicks))
 
-	with timer("Log-binning features"):
-		for fea in ['ip_day_hour_count','ip_app_count','ip_app_os_count','ip_device_count',
-				'app_channel_count','next_click','ip_channel_unique']: 
-				    df[fea]= np.log2(1 + df[fea].values).astype(int)
+	for fea in ['ip_day_hour_count','ip_app_count','ip_app_os_count','ip_device_count',
+				'app_channel_count','next_click']:  df[fea]= np.log2(1 + df[fea].values).astype(int)
 
 	with timer("Generating str_array"):
 		str_array= ("I" + df['ip'].astype(str) \
@@ -118,8 +99,7 @@ def df2csr(wb, df, pick_hours=None):
 			+ " AOC" + df['ip_app_os_count'].astype(str) \
 			+ " IDC" + df['ip_device_count'].astype(str) \
 			+ " AC" + df['app_channel_count'].astype(str) \
-			+ " NC" + df['next_click'].astype(str) \
-			+ " ICU" + df['ip_channel_unique'].astype(str)
+			+ " NC" + df['next_click'].astype(str)
 		  ).values
 	#cpuStats()
 	if 'is_attributed' in df.columns:
@@ -144,13 +124,28 @@ class ThreadWithReturnValue(threading.Thread):
 
 batchsize = 10000000
 D = 2 ** 20
+#path = '../input/'
+path = "/home/darragh/tdata/data/"
+#path = '/Users/dhanley2/Documents/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
+start_time = time.time()
+validation =  True
+if validation:
+    add_ = 'val'
+    test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
+    val_size = 0
+else:
+    val_size = 10000
+    add_ = ''
+    test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
+    
 
-wb = wordbatch.WordBatch(None, extractor=(WordHash, {"ngram_range": (1, 1), "analyzer": "word",
+wbmod = wb.WordBatch(None, extractor=(WordHash, {"ngram_range": (1, 1), "analyzer": "word",
 													 "lowercase": False, "n_features": D,
 													 "norm": None, "binary": True})
 						 , minibatch_size=batchsize // 80, procs=8, freeze=True, timeout=1800, verbose=0)
 clf = FM_FTRL(alpha=0.05, beta=0.1, L1=0.0, L2=0.0, D=D, alpha_fm=0.02, L2_fm=0.0, init_fm=0.01, weight_fm=1.0,
-			  D_fm=8, e_noise=0.0, iters=2, inv_link="sigmoid", e_clip=1.0, threads=4, use_avx=1, verbose=0)
+			  D_fm=8, e_noise=0.0, iters=3, inv_link="sigmoid", e_clip=1.0, threads=4, use_avx=1, verbose=0)
 
 dtypes = {
 		'ip'            : 'uint32',
@@ -163,19 +158,17 @@ dtypes = {
 
 p = None
 rcount = 0
-for df_c in pd.read_csv(path+"train%s.csv"%(add_), engine='c', chunksize=batchsize, sep=",", dtype=dtypes):
+for df_c in pd.read_csv(path +'train%s.csv'%(add_), engine='c', chunksize=batchsize,
+						sep=",", dtype=dtypes):
 	rcount += batchsize
-	# if rcount== 130000000:
-	# 	df_c['click_time'] = pd.to_datetime(df_c['click_time'])
-	# 	df_c['day'] = df_c['click_time'].dt.day.astype('uint8')
-	#	df_c= df_c[df_c['day']==8]
+	#cpuStats()
 	str_array, labels, weights= df2csr(wb, df_c, pick_hours={4, 5, 10, 13, 14})
 	del(df_c)
 	if p != None:
 		p.join()
 		del(X)
 	gc.collect()
-	X= wb.transform(str_array)
+	X= wbmod.transform(str_array)
 	del(str_array)
 	if rcount % (2 * batchsize) == 0:
 		if p != None:  p.join()
@@ -193,29 +186,28 @@ p = None
 click_ids= []
 test_preds = []
 rcount = 0
-for df_c in pd.read_csv(path+"test%s.csv"%(add_), engine='c', chunksize=batchsize,
+for df_c in pd.read_csv(path +'test%s.csv'%(add_), engine='c', chunksize=batchsize,
 						sep=",", dtype=dtypes):
 	rcount += batchsize
 	if rcount % (10 * batchsize) == 0:
 		print(rcount)
-	str_array, labels, weights = df2csr(wb, df_c, [])
-    #if not validation:
-    #    ck_ids+= df_c['click_id'].tolist()
+	str_array, labels, weights = df2csr(wb, df_c)
+	click_ids+= df_c['click_id'].tolist()
 	del(df_c)
 	if p != None:
 		test_preds += list(p.join())
 		del (X)
 	gc.collect()
-	X = wb.transform(str_array)
+	X = wbmod.transform(str_array)
 	del (str_array)
 	p = ThreadWithReturnValue(target=predict_batch, args=(clf, X))
 	p.start()
 if p != None:  test_preds += list(p.join())
 
-
-if not validation:
-    df_sub = pd.DataFrame({"click_id": click_ids, 'is_attributed': test_preds})
-else:
-    df_sub = pd.DataFrame({'is_attributed': test_preds})
-    
-df_sub.to_csv(path + "../sub/wordbatch_fm_ftrl%s.csv.gz"%(add_), index=False, compression = 'gzip')
+y_act = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=['is_attributed'])['is_attributed'].values
+fpr, tpr, thresholds = metrics.roc_curve(y_act, test_preds, pos_label=1)
+print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+'''
+df_sub = pd.DataFrame({"click_id": click_ids, 'is_attributed': test_preds})
+df_sub.to_csv("wordbatch_fm_ftrl.csv", index=False)
+'''
