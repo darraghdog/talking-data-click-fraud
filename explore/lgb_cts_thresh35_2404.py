@@ -88,6 +88,7 @@ ctdtypes = {
         }
 
 validation = False
+stack_val  = True
 save_df    = False
 load_df    = False
 difftime_threshold = 35
@@ -104,9 +105,25 @@ else:
     early_stop = ntrees
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
+if stack_val:
+    ntrees = 1251
+    early_stop = ntrees
+    add_ = '' 
+    test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
+
 
 print('[{}] Load Train'.format(time.time() - start_time))
 train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed', 'attributed_time'])
+train_df.shape
+
+if stack_val:
+    val_idx = pd.read_csv(path+"val_id.csv.zip", compression = 'zip')['id'].values
+    tstval_idx = (val_idx -1).tolist()
+    trnval_idx = list(set(train_df.index.tolist()) - set(tstval_idx))
+    print('Shapes of train and test validation')
+    print(train_df.iloc[trnval_idx].shape)
+    print(train_df.iloc[tstval_idx].shape)
+
 
 print('[{}] Remove late downloads'.format(time.time() - start_time))
 idx = train_df['attributed_time'].notnull()
@@ -262,9 +279,15 @@ train_df.head()
 
 
 print('[{}] Split data'.format(time.time() - start_time))
-test_df = train_df[len_train:]
-val_df = train_df[(len_train-val_size):len_train]
-train_df = train_df[:(len_train-val_size)]
+if stack_val:
+    test_df  = train_df.iloc[tstval_idx]
+    val_df   = train_df.iloc[tstval_idx]
+    train_df = train_df.iloc[trnval_idx]
+    test_df['click_id'] = val_idx
+else:
+    test_df = train_df[len_train:]
+    val_df = train_df[(len_train-val_size):len_train]
+    train_df = train_df[:(len_train-val_size)]
 
 # Remove device 3032
 print('Device 3032 shape : %s'%(train_df[train_df['device']==3032].shape[0]))
@@ -382,10 +405,14 @@ if not validation:
     print("Predicting...")
     sub['is_attributed'] = bst.predict(test_df[predictors])
     print("writing...")
-    sub.to_csv(path + '../sub/sub_lgb2404_difftime_thresh'+str(difftime_threshold)+'.csv.gz',index=False, compression = 'gzip')
+    if stack_val:
+        sub.to_csv(path + '../sub/sub_lgb2404_difftime_thresh'+str(difftime_threshold)+'_stack_val.csv.gz',index=False, compression = 'gzip')        
+    else:
+        sub.to_csv(path + '../sub/sub_lgb2404_difftime_thresh'+str(difftime_threshold)+'.csv.gz',index=False, compression = 'gzip')
     print("done...")
     print(sub.info())
 else:
+
     max_ip = 126413
     preds =   bst.predict(test_df[predictors])
     fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, preds, pos_label=1)
