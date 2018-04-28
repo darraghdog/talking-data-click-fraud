@@ -111,7 +111,7 @@ else:
     add_ = ''
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
 if stack_val:
-    ntrees = 1251
+    ntrees = 1300
     early_stop = ntrees
     add_ = '' 
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'click_id']
