@@ -1,7 +1,7 @@
 import sys
 
-#sys.path.insert(0, '../input/wordbatch-133/wordbatch/')
-#sys.path.insert(0, '../input/randomstate/randomstate/')
+sys.path.insert(0, '../input/wordbatch-133/wordbatch/')
+sys.path.insert(0, '../input/randomstate/randomstate/')
 import wordbatch
 from wordbatch.extractors import WordHash
 from wordbatch.models import FM_FTRL
@@ -26,20 +26,9 @@ def cpuStats():
 	memoryUse = py.memory_info()[0] / 2. ** 30
 	print('memory GB:', memoryUse)
 
-#path = '../input/'
-path = "/home/darragh/tdata/data/"
-#path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
-
-start_time = time.time()
 mean_auc= 0
-validation = True
-if validation:
-    add_ = 'val'
-else:
-    add_ = ''
 
 def fit_batch(clf, X, y, w):  clf.partial_fit(X, y, sample_weight=w)
 
@@ -163,12 +152,14 @@ dtypes = {
 
 p = None
 rcount = 0
-for df_c in pd.read_csv(path+"train%s.csv"%(add_), engine='c', chunksize=batchsize, sep=",", dtype=dtypes):
+for df_c in pd.read_csv('../input/talkingdata-adtracking-fraud-detection/train.csv', engine='c', chunksize=batchsize,
+#for df_c in pd.read_csv('../input/train.csv', engine='c', chunksize=batchsize, 
+						skiprows= range(1,9308569), sep=",", dtype=dtypes):
 	rcount += batchsize
-	# if rcount== 130000000:
-	# 	df_c['click_time'] = pd.to_datetime(df_c['click_time'])
-	# 	df_c['day'] = df_c['click_time'].dt.day.astype('uint8')
-	#	df_c= df_c[df_c['day']==8]
+	if rcount== 130000000:
+		df_c['click_time'] = pd.to_datetime(df_c['click_time'])
+		df_c['day'] = df_c['click_time'].dt.day.astype('uint8')
+		df_c= df_c[df_c['day']==8]
 	str_array, labels, weights= df2csr(wb, df_c, pick_hours={4, 5, 10, 13, 14})
 	del(df_c)
 	if p != None:
@@ -186,6 +177,7 @@ for df_c in pd.read_csv(path+"train%s.csv"%(add_), engine='c', chunksize=batchsi
 	if p != None:  p.join()
 	p = threading.Thread(target=fit_batch, args=(clf, X, labels, weights))
 	p.start()
+	if rcount == 130000000:  break
 if p != None:  p.join()
 
 del(X)
@@ -193,14 +185,14 @@ p = None
 click_ids= []
 test_preds = []
 rcount = 0
-for df_c in pd.read_csv(path+"test%s.csv"%(add_), engine='c', chunksize=batchsize,
+for df_c in pd.read_csv('../input/talkingdata-adtracking-fraud-detection/test.csv', engine='c', chunksize=batchsize,
+#for df_c in pd.read_csv('../input/test.csv', engine='c', chunksize=batchsize,
 						sep=",", dtype=dtypes):
 	rcount += batchsize
 	if rcount % (10 * batchsize) == 0:
 		print(rcount)
-	str_array, labels, weights = df2csr(wb, df_c, [])
-    #if not validation:
-    #    ck_ids+= df_c['click_id'].tolist()
+	str_array, labels, weights = df2csr(wb, df_c)
+	click_ids+= df_c['click_id'].tolist()
 	del(df_c)
 	if p != None:
 		test_preds += list(p.join())
@@ -212,10 +204,5 @@ for df_c in pd.read_csv(path+"test%s.csv"%(add_), engine='c', chunksize=batchsiz
 	p.start()
 if p != None:  test_preds += list(p.join())
 
-
-if not validation:
-    df_sub = pd.DataFrame({"click_id": click_ids, 'is_attributed': test_preds})
-else:
-    df_sub = pd.DataFrame({'is_attributed': test_preds})
-    
-df_sub.to_csv(path + "../sub/wordbatch_fm_ftrl%s.csv.gz"%(add_), index=False, compression = 'gzip')
+df_sub = pd.DataFrame({"click_id": click_ids, 'is_attributed': test_preds})
+df_sub.to_csv("wordbatch_fm_ftrl.csv", index=False)
