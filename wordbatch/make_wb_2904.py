@@ -11,6 +11,7 @@ import time
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
+from sklearn import metrics
 
 import wordbatch
 from wordbatch.extractors import WordHash
@@ -66,8 +67,8 @@ validation =  True
 load_raw_stg1 = False
 load_raw_stg2 = False
 mean_auc= 0
-batchsize = 10000000
-D = 2 ** 20
+batchsize = 20000000
+D = 2 ** 28
 
 if validation:
     add_ = 'val'
@@ -352,7 +353,7 @@ if load_raw_stg2:
                    'click_sec_lag_os', 'click_sec_lead_app', 'click_sec_lag_app', \
                    'click_sec_lead_sameappchl', 'click_sec_lead_shift2']
     logsm4_cols = ['click_sec_lead_split_sec', 'click_sec_lead_split_sec_ip_only']
-    numsm_cols =  ['ip_device_entropy', 'ip_app_entropy', 'ip_os_entropy.x', 'ip_click_min_entropy', \
+    numsm_cols =  ['ip_device_entropy', 'ip_app_entropy', 'ip_click_min_entropy', \
                    'ip_click_hr_entropy', 'ip_channel_entropy']
     drop_cols = []
     
@@ -376,13 +377,13 @@ if load_raw_stg2:
     test_df.to_feather(path + '../weights/test_df%s_proc.feather'%(add_))
 
 
-train_df = pd.read_feather(path + '../weights/train_df%s.feather'%(add_))
-test_df  = pd.read_feather(path + '../weights/test_df%s.feather'%(add_))
+train_df = pd.read_feather(path + '../weights/train_df%s_proc.feather'%(add_))
+test_df  = pd.read_feather(path + '../weights/test_df%s_proc.feather'%(add_))
 train_df.head()
 test_df.head()
 test_df.dtypes
 
-letters = list(map(chr, range(97, 123)))
+letters = list(map(chr, range(97, 199)))
 col_mapper = dict(((l, col) for (l, col) in zip(train_df.columns[1:], letters)))
 for k, v in col_mapper.items():
     print("+ ' %s' + df['%s'].astype(str)"%(v, k))
@@ -392,32 +393,39 @@ def df2csr(wb, df, pick_hours=None):
     
 	with timer("Generating str_array"):
 		str_array= ( \
-                'a' + df['app'].astype(str) \
-                + ' b' + df['device'].astype(str) \
-                + ' c' + df['os'].astype(str) \
-                + ' d' + df['channel'].astype(str) \
-                + ' e' + df['hour'].astype(str) \
-                + ' f' + df['ip'].astype(str) \
-                + ' g' + df['qty'].astype(str) \
-                + ' h' + df['prevday_qty'].astype(str) \
-                + ' i' + df['prevhour_qty'].astype(str) \
-                + ' j' + df['count_in_next_ten_mins'].astype(str) \
-                + ' k' + df['click_sec_lead_chl'].astype(str) \
-                + ' l' + df['click_sec_lag_chl'].astype(str) \
-                + ' m' + df['click_sec_lead_os'].astype(str) \
-                + ' n' + df['click_sec_lag_os'].astype(str) \
-                + ' o' + df['click_sec_lead_app'].astype(str) \
-                + ' p' + df['click_sec_lag_app'].astype(str) \
-                + ' q' + df['click_sec_lead_sameappchl'].astype(str) \
-                + ' r' + df['click_sec_lead_shift2'].astype(str) \
-                + ' s' + df['click_sec_lead_split_sec'].astype(str) \
-                + ' t' + df['click_sec_lead_split_sec_ip_only'].astype(str) \
-                + ' u' + df['ip_device_entropy'].astype(str) \
-                + ' v' + df['ip_app_entropy'].astype(str) \
-                + ' w' + df['ip_os_entropy.x'].astype(str) \
-                + ' x' + df['ip_click_min_entropy'].astype(str) \
-                + ' y' + df['ip_click_hr_entropy'].astype(str) \
-                + ' z' + df['ip_channel_entropy'].astype(str)
+                   'a' + df['app'].astype(str) \
+                    + ' b' + df['device'].astype(str) \
+                    + ' c' + df['os'].astype(str) \
+                    + ' d' + df['channel'].astype(str) \
+                    + ' e' + df['hour'].astype(str) \
+                    + ' f' + df['ip'].astype(str) \
+                    + ' g' + df['qty'].astype(str) \
+                    + ' h' + df['prevday_qty'].astype(str) \
+                    + ' i' + df['prevhour_qty'].astype(str) \
+                    + ' j' + df['count_in_next_ten_mins'].astype(str) \
+                    + ' k' + df['click_sec_lead_chl'].astype(str) \
+                    + ' l' + df['click_sec_lag_chl'].astype(str) \
+                    + ' m' + df['click_sec_lead_os'].astype(str) \
+                    + ' n' + df['click_sec_lag_os'].astype(str) \
+                    + ' o' + df['click_sec_lead_app'].astype(str) \
+                    + ' p' + df['click_sec_lag_app'].astype(str) \
+                    + ' q' + df['click_sec_lead_sameappchl'].astype(str) \
+                    + ' r' + df['click_sec_lead_shift2'].astype(str) \
+                    + ' s' + df['click_sec_lead_split_sec'].astype(str) \
+                    + ' t' + df['click_sec_lead_split_sec_ip_only'].astype(str) \
+                    + ' u' + df['ip_device_entropy'].astype(str) \
+                    + ' v' + df['ip_app_entropy'].astype(str) \
+                    + ' x' + df['ip_click_min_entropy'].astype(str) \
+                    + ' y' + df['ip_click_hr_entropy'].astype(str) \
+                    + ' z' + df['ip_channel_entropy'].astype(str) \
+                    + ' {' + df['os_channel'].astype(str) \
+                    + ' |' + df['app_channel'].astype(str) \
+                    + ' }' + df['app_device'].astype(str) \
+                    + ' ~' + df['app_os'].astype(str) \
+                    + ' ' + df['app_hour'].astype(str) \
+                    + ' ' + df['channel_hour'].astype(str) \
+                    + ' ' + df['device_hour'].astype(str) \
+                    + ' ' + df['ip_app'].astype(str)
 		  ).values
 	#cpuStats()
 	if 'is_attributed' in df.columns:
@@ -473,22 +481,22 @@ for df_c in chunker(train_df, batchsize):
 	if p != None:  p.join()
 	p = threading.Thread(target=fit_batch, args=(clf, X, labels, weights))
 	p.start()
-	if rcount == 130000000:  break
 if p != None:  p.join()
 
 
 
 del(X)
+gc.collect()
 p = None
 click_ids= []
 test_preds = []
 rcount = 0
-for df_c in chunker(train_df, batchsize):
+for df_c in chunker(test_df, batchsize):
 	rcount += batchsize
 	if rcount % (10 * batchsize) == 0:
 		print(rcount)
-	str_array, labels, weights = df2csr(wb, df_c)
-	click_ids+= df_c['click_id'].tolist()
+	str_array, labels, weights = df2csr(wb, df_c, {})
+	# click_ids+= df_c['click_id'].tolist()
 	del(df_c)
 	if p != None:
 		test_preds += list(p.join())
@@ -496,12 +504,28 @@ for df_c in chunker(train_df, batchsize):
 	gc.collect()
 	X = wb.transform(str_array)
 	del (str_array)
+	print("Inference", rcount, time.time() - start_time)
+	cpuStats()
 	p = ThreadWithReturnValue(target=predict_batch, args=(clf, X))
 	p.start()
 if p != None:  test_preds += list(p.join())
 
-df_sub = pd.DataFrame({"click_id": click_ids, 'is_attributed': test_preds})
-df_sub.to_csv("wordbatch_fm_ftrl.csv", index=False)
+if validation:
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, test_preds, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    df_sub = pd.DataFrame({'is_attributed': test_preds})
+    df_sub.to_csv(path + "../sub/wordbatch_fm_ftrlval.csv", index=False)
+    
+    
+    sublg = pd.read_csv(path + "../sub/sub_lgb1704val.csv.gz", compression = 'gzip').values.flatten()
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, sublg, pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+    
+    lg_ = pd.Series(sublg).rank()/sublg.shape[0]
+    wb_ = pd.Series(test_preds).rank()/len(test_preds)
+    fpr, tpr, thresholds = metrics.roc_curve(test_df['is_attributed'].values, 0.95*lg_ + 0.05*wb_ , pos_label=1)
+    print('Auc for all hours in testval : %s'%(metrics.auc(fpr, tpr)))
+
 
 
 '''
