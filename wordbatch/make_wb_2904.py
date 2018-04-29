@@ -383,7 +383,7 @@ train_df.head()
 test_df.head()
 test_df.dtypes
 
-letters = list(map(chr, range(97, 199)))
+letters = ['A'+i for i in map(chr, range(97, 120))] + ['B'+i for i in map(chr, range(97, 120))]
 col_mapper = dict(((l, col) for (l, col) in zip(train_df.columns[1:], letters)))
 for k, v in col_mapper.items():
     print("+ ' %s' + df['%s'].astype(str)"%(v, k))
@@ -393,39 +393,40 @@ def df2csr(wb, df, pick_hours=None):
     
 	with timer("Generating str_array"):
 		str_array= ( \
-                   'a' + df['app'].astype(str) \
-                    + ' b' + df['device'].astype(str) \
-                    + ' c' + df['os'].astype(str) \
-                    + ' d' + df['channel'].astype(str) \
-                    + ' e' + df['hour'].astype(str) \
-                    + ' f' + df['ip'].astype(str) \
-                    + ' g' + df['qty'].astype(str) \
-                    + ' h' + df['prevday_qty'].astype(str) \
-                    + ' i' + df['prevhour_qty'].astype(str) \
-                    + ' j' + df['count_in_next_ten_mins'].astype(str) \
-                    + ' k' + df['click_sec_lead_chl'].astype(str) \
-                    + ' l' + df['click_sec_lag_chl'].astype(str) \
-                    + ' m' + df['click_sec_lead_os'].astype(str) \
-                    + ' n' + df['click_sec_lag_os'].astype(str) \
-                    + ' o' + df['click_sec_lead_app'].astype(str) \
-                    + ' p' + df['click_sec_lag_app'].astype(str) \
-                    + ' q' + df['click_sec_lead_sameappchl'].astype(str) \
-                    + ' r' + df['click_sec_lead_shift2'].astype(str) \
-                    + ' s' + df['click_sec_lead_split_sec'].astype(str) \
-                    + ' t' + df['click_sec_lead_split_sec_ip_only'].astype(str) \
-                    + ' u' + df['ip_device_entropy'].astype(str) \
-                    + ' v' + df['ip_app_entropy'].astype(str) \
-                    + ' x' + df['ip_click_min_entropy'].astype(str) \
-                    + ' y' + df['ip_click_hr_entropy'].astype(str) \
-                    + ' z' + df['ip_channel_entropy'].astype(str) \
-                    + ' {' + df['os_channel'].astype(str) \
-                    + ' |' + df['app_channel'].astype(str) \
-                    + ' }' + df['app_device'].astype(str) \
-                    + ' ~' + df['app_os'].astype(str) \
-                    + ' ' + df['app_hour'].astype(str) \
-                    + ' ' + df['channel_hour'].astype(str) \
-                    + ' ' + df['device_hour'].astype(str) \
-                    + ' ' + df['ip_app'].astype(str)
+                   'Aa' + df['app'].astype(str) \
+                    + ' Ab' + df['device'].astype(str) \
+                    + ' Ac' + df['os'].astype(str) \
+                    + ' Ad' + df['channel'].astype(str) \
+                    + ' Ae' + df['hour'].astype(str) \
+                    + ' Af' + df['ip'].astype(str) \
+                    + ' Ag' + df['qty'].astype(str) \
+                    + ' Ah' + df['prevday_qty'].astype(str) \
+                    + ' Ai' + df['prevhour_qty'].astype(str) \
+                    + ' Aj' + df['count_in_next_ten_mins'].astype(str) \
+                    + ' Ak' + df['click_sec_lead_chl'].astype(str) \
+                    + ' Al' + df['click_sec_lag_chl'].astype(str) \
+                    + ' Am' + df['click_sec_lead_os'].astype(str) \
+                    + ' An' + df['click_sec_lag_os'].astype(str) \
+                    + ' Ao' + df['click_sec_lead_app'].astype(str) \
+                    + ' Ap' + df['click_sec_lag_app'].astype(str) \
+                    + ' Aq' + df['click_sec_lead_sameappchl'].astype(str) \
+                    + ' Ar' + df['click_sec_lead_shift2'].astype(str) \
+                    + ' As' + df['click_sec_lead_split_sec'].astype(str) \
+                    + ' At' + df['click_sec_lead_split_sec_ip_only'].astype(str) \
+                    + ' Au' + df['ip_device_entropy'].astype(str) \
+                    + ' Av' + df['ip_app_entropy'].astype(str) \
+                    + ' Aw' + df['ip_os_entropy.x'].astype(str) \
+                    + ' Ba' + df['ip_click_min_entropy'].astype(str) \
+                    + ' Bb' + df['ip_click_hr_entropy'].astype(str) \
+                    + ' Bc' + df['ip_channel_entropy'].astype(str) \
+                    + ' Bd' + df['os_channel'].astype(str) \
+                    + ' Be' + df['app_channel'].astype(str) \
+                    + ' Bf' + df['app_device'].astype(str) \
+                    + ' Bg' + df['app_os'].astype(str) \
+                    + ' Bh' + df['app_hour'].astype(str) \
+                    + ' Bi' + df['channel_hour'].astype(str) \
+                    + ' Bj' + df['device_hour'].astype(str) \
+                    + ' Bk' + df['ip_app'].astype(str)
 		  ).values
 	#cpuStats()
 	if 'is_attributed' in df.columns:
