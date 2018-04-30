@@ -40,8 +40,8 @@ def cpuStats():
     
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
-path = '/Users/dhanley2/Documents/tdata/data/'
-path = '/home/ubuntu/tdata/data/'
+#path = '/Users/dhanley2/Documents/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -67,8 +67,8 @@ validation =  True
 load_raw_stg1 = False
 load_raw_stg2 = False
 mean_auc= 0
-batchsize = 20000000
-D = 2 ** 28
+batchsize = 10000000
+D = 2 ** 26
 
 if validation:
     add_ = 'val'
