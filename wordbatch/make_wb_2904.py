@@ -68,7 +68,7 @@ load_raw_stg1 = False
 load_raw_stg2 = False
 mean_auc= 0
 batchsize = 20000000
-D = 2 ** 28
+D = 2 ** 26
 
 if validation:
     add_ = 'val'
