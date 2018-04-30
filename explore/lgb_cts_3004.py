@@ -65,7 +65,7 @@ def lgb_modelfit_nocv(params, dtrain, dvalid, predictors, target='target', objec
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-path = '/home/ubuntu/tdata/data/'
+#path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -120,6 +120,8 @@ print('[{}] Load Test'.format(time.time() - start_time))
 test_df = pd.read_csv(path+"test%s.csv"%(add_), dtype=dtypes, usecols=test_usecols)
 
 print('[{}] Load Features'.format(time.time() - start_time))
+featbmeaniptrn = pd.read_csv(path+'../features/bmeantrn_ip.gz', compression = 'gzip')
+featbmeaniptst = pd.read_csv(path+'../features/bmeantst_ip.gz', compression = 'gzip')
 feattrnapp = pd.read_csv(path+'../features/lead_lag_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattstapp = pd.read_csv(path+'../features/lead_lag_tst_ip_device_os_app%s.gz'%(add_), compression = 'gzip')
 feattrnspl = pd.read_csv(path+'../features/lead_split_sec_trn_ip_device_os_app%s.gz'%(add_), compression = 'gzip').astype(np.float32)
@@ -233,6 +235,16 @@ test_df  = pd.concat([test_df , feattst, feattstnext, feattstprev, feattstctn], 
 del feattrn, feattst, feattrnnext, feattstnext, feattrnprev, feattstprev
 gc.collect()
 
+print('[{}] Add Bayes Mean'.format(time.time() - start_time))
+featbmeaniptrn['bmean'] = featbmeaniptrn['bmean'].astype(np.float32)
+featbmeaniptst['bmean'] = featbmeaniptst['bmean'].astype(np.float32)
+train_df['click_day'] = pd.to_datetime(train_df.click_time).dt.day.astype('uint8')
+train_df = train_df.merge(featbmeaniptrn, on=['ip', 'click_day'], how='left')
+test_df  = test_df.merge(featbmeaniptst, on=['ip'], how='left')
+train_df.drop('click_day', axis = 1, inplace = True)
+del featbmeaniptrn, featbmeaniptst
+gc.collect()
+
 print(train_df.shape)
 print(test_df.shape)
 print(train_df.columns)
@@ -299,6 +311,7 @@ lead_cols += [col for col in train_df.columns if 'next_' in col]
 lead_cols += [col for col in train_df.columns if 'device_ct' in col]
 lead_cols += [col for col in train_df.columns if 'cumsum' in col]
 lead_cols += [col for col in train_df.columns if 'entropy' in col]
+lead_cols += [col for col in train_df.columns if 'bmean' in col]
 lead_cols += [col for col in train_df.columns if 'qty' in col]
 lead_cols += [col for col in train_df.columns if 'count_in_next_' in col]
 lead_cols += ['ip', 'app','device','os', 'channel', 'hour']
