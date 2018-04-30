@@ -1,15 +1,15 @@
-# lag_split_sec_trn_ip_device_os_app
-gunzip lag_split_sec_trn_ip_device_os_app.gz
-sed -n 1,1p lag_split_sec_trn_ip_device_os_app > lag_split_sec_trn_ip_device_os_appval
-sed -n 60000000,122080000p lag_split_sec_trn_ip_device_os_app >> lag_split_sec_trn_ip_device_os_appval
+# dupeseqtrn
+gunzip dupeseqtrn.gz
+sed -n 1,1p dupeseqtrn > dupeseqtrnval
+sed -n 60000000,122080000p dupeseqtrn >> dupeseqtrnval
+sed -n 1,1p dupeseqtrn > dupeseqtstval
+sed -n 144710000,152400000p dupeseqtrn >> dupeseqtstval
+sed -n 162000000,168300000p dupeseqtrn >> dupeseqtstval
+sed -n 175000000,181880000p dupeseqtrn >> dupeseqtstval
+gzip dupeseqtrn
+gzip dupeseqtrnval
+gzip dupeseqtstval
 
-sed -n 1,1p lag_split_sec_trn_ip_device_os_app > lag_split_sec_tst_ip_device_os_appval
-sed -n 144710000,152400000p lag_split_sec_trn_ip_device_os_app >> lag_split_sec_tst_ip_device_os_appval
-sed -n 162000000,168300000p lag_split_sec_trn_ip_device_os_app >> lag_split_sec_tst_ip_device_os_appval
-sed -n 175000000,181880000p lag_split_sec_trn_ip_device_os_app >> lag_split_sec_tst_ip_device_os_appval
-gzip lag_split_sec_trn_ip_device_os_app
-gzip lag_split_sec_trn_ip_device_os_appval
-gzip lag_split_sec_tst_ip_device_os_appval
 
 
 ## count_same_in_next_trn
