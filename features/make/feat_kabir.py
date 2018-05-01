@@ -166,7 +166,7 @@ def do_var( df, group_cols, counted, agg_type='float16', show_max=False, show_ag
 #path = '../input/'
 path = "/home/darragh/tdata/data/"
 path = '/Users/dhanley2/Documents/tdata/data/'
-#path = '/home/ubuntu/tdata/data/'
+path = '/home/ubuntu/tdata/data/'
 start_time = time.time()
 
 dtypes = {
@@ -217,8 +217,8 @@ train_df.head()
 gc.collect()
 train_df['hour'] = pd.to_datetime(train_df.click_time).dt.hour.astype('int8')
 train_df['day'] = pd.to_datetime(train_df.click_time).dt.day.astype('int8') 
-train_df = do_next_Click( train_df,agg_suffix='nextClick', agg_type='float32'  ); gc.collect()
-train_df = do_prev_Click( train_df,agg_suffix='prevClick', agg_type='float32'  ); gc.collect()  ## Removed temporarily due RAM sortage. 
+#train_df = do_next_Click( train_df,agg_suffix='nextClick', agg_type='float32'  ); gc.collect()
+#train_df = do_prev_Click( train_df,agg_suffix='prevClick', agg_type='float32'  ); gc.collect()  ## Removed temporarily due RAM sortage. 
 
 train_df = do_countuniq( train_df, ['ip'], 'channel' ); gc.collect()
 train_df = do_countuniq( train_df, ['ip', 'device', 'os'], 'app'); gc.collect()
@@ -232,8 +232,9 @@ train_df = do_cumcount( train_df, ['ip', 'device', 'os'], 'app'); gc.collect()
 train_df = do_count( train_df, ['ip', 'day', 'hour'] ); gc.collect()
 train_df = do_count( train_df, ['ip', 'app']); gc.collect()
 train_df = do_count( train_df, ['ip', 'app', 'os']); gc.collect()
-
+train_df.drop(train_usecols, 1, inplace = True)
 del train_df['day']
+del train_df['hour']
 gc.collect()
 gc.collect()
 
@@ -245,14 +246,14 @@ feattrn = train_df[:len_train]
 feattst.reset_index(drop=True, inplace = True)
 print(feattst.shape)
 print(feattrn.shape)
-feattst.to_feather(path+'../features/feat_next_kabirtst.feather')
-feattrn.to_feather(path+'../features/feat_next_kabirtrn.feather')
+feattst.to_pickle(path+'../features/feat_next_kabirtst.pkl')
+feattrn.to_pickle(path+'../features/feat_next_kabirtrn.pkl')
 feattrnval = feattrn[(60000000-2):(122080000-1)].reset_index(drop = True)
 feattstval = pd.concat([feattrn[(144710000-2):(152400000-1)], \
            feattrn[(162000000-2):(168300000-1)], \
            feattrn[(175000000-2):(181880000-1)]]).reset_index(drop=True)
 feattrnval.reset_index(drop=True, inplace = True)
 feattstval.reset_index(drop=True, inplace = True)
-feattrnval.to_feather(path+'../features/feat_next_kabirtrnval.feather')
-feattstval.to_feather(path+'../features/feat_next_kabirtstval.feather')
+feattrnval.to_feather(path+'../features/feat_next_kabirtrnval.pkl')
+feattstval.to_feather(path+'../features/feat_next_kabirtstval.pkl')
 gc.collect()
