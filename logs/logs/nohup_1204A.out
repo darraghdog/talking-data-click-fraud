@@ -1,0 +1,150 @@
+nohup: ignoring input
+neural network....
+Using TensorFlow backend.
+load train....
+[2.6702880859375e-05] Load Train
+[32.77079749107361] Load Test
+[43.65957283973694] Load Lead/Lag Features
+[122.44880747795105] Load Entropy Features
+[124.76174592971802] Concat Features
+[126.92840075492859] Add entropy
+hour, day, wday....
+grouping by ip-day-hour combination....
+group by ip-app combination....
+group by ip-app-os combination....
+vars and data type....
+label encoding....
+final part of preparation....
+WARNING:tensorflow:From /home/ubuntu/anaconda3/lib/python3.6/site-packages/tensorflow/python/util/deprecation.py:497: calling conv1d (from tensorflow.python.ops.nn_ops) with data_format=NHWC is deprecated and will be removed in a future version.
+Instructions for updating:
+`NHWC` for data_format is deprecated, use `NWC` instead
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+app (InputLayer)                (None, 1)            0                                            
+__________________________________________________________________________________________________
+channel (InputLayer)            (None, 1)            0                                            
+__________________________________________________________________________________________________
+device (InputLayer)             (None, 1)            0                                            
+__________________________________________________________________________________________________
+os (InputLayer)                 (None, 1)            0                                            
+__________________________________________________________________________________________________
+hour (InputLayer)               (None, 1)            0                                            
+__________________________________________________________________________________________________
+qty (InputLayer)                (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_app_count (InputLayer)       (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_app_os_count (InputLayer)    (None, 1)            0                                            
+__________________________________________________________________________________________________
+click_sec_lead_bins (InputLayer (None, 1)            0                                            
+__________________________________________________________________________________________________
+click_sec_lag_bins (InputLayer) (None, 1)            0                                            
+__________________________________________________________________________________________________
+embedding_1 (Embedding)         (None, 1, 40)        30760       app[0][0]                        
+__________________________________________________________________________________________________
+embedding_2 (Embedding)         (None, 1, 40)        20040       channel[0][0]                    
+__________________________________________________________________________________________________
+embedding_3 (Embedding)         (None, 1, 40)        168960      device[0][0]                     
+__________________________________________________________________________________________________
+embedding_4 (Embedding)         (None, 1, 40)        38200       os[0][0]                         
+__________________________________________________________________________________________________
+embedding_5 (Embedding)         (None, 1, 40)        960         hour[0][0]                       
+__________________________________________________________________________________________________
+embedding_6 (Embedding)         (None, 1, 40)        1747720     qty[0][0]                        
+__________________________________________________________________________________________________
+embedding_7 (Embedding)         (None, 1, 40)        2240640     ip_app_count[0][0]               
+__________________________________________________________________________________________________
+embedding_8 (Embedding)         (None, 1, 40)        929320      ip_app_os_count[0][0]            
+__________________________________________________________________________________________________
+embedding_9 (Embedding)         (None, 1, 40)        2480        click_sec_lead_bins[0][0]        
+__________________________________________________________________________________________________
+embedding_10 (Embedding)        (None, 1, 40)        2480        click_sec_lag_bins[0][0]         
+__________________________________________________________________________________________________
+concatenate_1 (Concatenate)     (None, 1, 400)       0           embedding_1[0][0]                
+                                                                 embedding_2[0][0]                
+                                                                 embedding_3[0][0]                
+                                                                 embedding_4[0][0]                
+                                                                 embedding_5[0][0]                
+                                                                 embedding_6[0][0]                
+                                                                 embedding_7[0][0]                
+                                                                 embedding_8[0][0]                
+                                                                 embedding_9[0][0]                
+                                                                 embedding_10[0][0]               
+__________________________________________________________________________________________________
+spatial_dropout1d_1 (SpatialDro (None, 1, 400)       0           concatenate_1[0][0]              
+__________________________________________________________________________________________________
+conv1d_1 (Conv1D)               (None, 1, 100)       160100      spatial_dropout1d_1[0][0]        
+__________________________________________________________________________________________________
+flatten_1 (Flatten)             (None, 400)          0           spatial_dropout1d_1[0][0]        
+__________________________________________________________________________________________________
+flatten_2 (Flatten)             (None, 100)          0           conv1d_1[0][0]                   
+__________________________________________________________________________________________________
+ip_device_entropy (InputLayer)  (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_os_entropy (InputLayer)      (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_app_entropy (InputLayer)     (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_channel_entropy (InputLayer) (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_click_hr_entropy (InputLayer (None, 1)            0                                            
+__________________________________________________________________________________________________
+ip_click_min_entropy (InputLaye (None, 1)            0                                            
+__________________________________________________________________________________________________
+click_sec_lead_scale (InputLaye (None, 1)            0                                            
+__________________________________________________________________________________________________
+click_sec_lag_scale (InputLayer (None, 1)            0                                            
+__________________________________________________________________________________________________
+concatenate_2 (Concatenate)     (None, 508)          0           flatten_1[0][0]                  
+                                                                 flatten_2[0][0]                  
+                                                                 ip_device_entropy[0][0]          
+                                                                 ip_os_entropy[0][0]              
+                                                                 ip_app_entropy[0][0]             
+                                                                 ip_channel_entropy[0][0]         
+                                                                 ip_click_hr_entropy[0][0]        
+                                                                 ip_click_min_entropy[0][0]       
+                                                                 click_sec_lead_scale[0][0]       
+                                                                 click_sec_lag_scale[0][0]        
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 1000)         509000      concatenate_2[0][0]              
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 1000)         0           dense_1[0][0]                    
+__________________________________________________________________________________________________
+dense_2 (Dense)                 (None, 1000)         1001000     dropout_1[0][0]                  
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 1000)         0           dense_2[0][0]                    
+__________________________________________________________________________________________________
+dense_3 (Dense)                 (None, 1)            1001        dropout_2[0][0]                  
+==================================================================================================
+Total params: 6,852,661
+Trainable params: 6,852,661
+Non-trainable params: 0
+__________________________________________________________________________________________________
+Train on 62080001 samples, validate on 20870003 samples
+Epoch 1/20
+2018-04-13 09:12:19.131833: I tensorflow/core/platform/cpu_feature_guard.cc:140] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2018-04-13 09:12:21.871768: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:898] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
+2018-04-13 09:12:21.872098: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1344] Found device 0 with properties: 
+name: Tesla K80 major: 3 minor: 7 memoryClockRate(GHz): 0.8235
+pciBusID: 0000:00:1e.0
+totalMemory: 11.17GiB freeMemory: 11.10GiB
+2018-04-13 09:12:21.872118: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1423] Adding visible gpu devices: 0
+2018-04-13 09:12:22.067833: I tensorflow/core/common_runtime/gpu/gpu_device.cc:911] Device interconnect StreamExecutor with strength 1 edge matrix:
+2018-04-13 09:12:22.067880: I tensorflow/core/common_runtime/gpu/gpu_device.cc:917]      0 
+2018-04-13 09:12:22.067890: I tensorflow/core/common_runtime/gpu/gpu_device.cc:930] 0:   N 
+2018-04-13 09:12:22.068161: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1041] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 10765 MB memory) -> physical GPU (device: 0, name: Tesla K80, pci bus id: 0000:00:1e.0, compute capability: 3.7)
+ - 701s - loss: 0.0017 - acc: 0.9848 - val_loss: 0.0571 - val_acc: 0.9857
+Epoch 2/20
+ - 697s - loss: 0.0013 - acc: 0.9884 - val_loss: 0.0504 - val_acc: 0.9870
+Epoch 3/20
+ - 697s - loss: 0.0013 - acc: 0.9886 - val_loss: 0.0497 - val_acc: 0.9872
+Epoch 4/20
+ - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0555 - val_acc: 0.9863
+Epoch 5/20
+ - 696s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0453 - val_acc: 0.9878
+Epoch 6/20
+ - 695s - loss: 0.0012 - acc: 0.9887 - val_loss: 0.0574 - val_acc: 0.9867
+Epoch 7/20
+ - 694s - loss: 0.0012 - acc: 0.9886 - val_loss: 0.0481 - val_acc: 0.9872
+Epoch 8/20

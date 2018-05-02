@@ -1,0 +1,561 @@
+nohup: ignoring input
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/sklearn/cross_validation.py:41: DeprecationWarning: This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module will be removed in 0.20.
+  "This module will be removed in 0.20.", DeprecationWarning)
+[8.58306884765625e-06] Load Train
+[38.400816679000854] Load Test
+[51.28168725967407] Load Features
+[295.97707533836365] Load Entropy Features
+[296.5794188976288] Load up the kanber features
+(62080001, 9)
+(20870003, 9)
+    X0   X1  X2  X3  X4  X5  X6    X7  X8
+0  110   10  23  45  16   9   5  1299  17
+1  102    0   7  54  39  12  50     2  31
+2  100  236  23  48  27  10  40   944  30
+3  115  346  22  52  20   7  11  1138  36
+4  121  374  24  63  40  19  33  1899  35
+    X0   X1  X2  X3  X4  X5  X6    X7  X8
+0  110   10  23  45  16   9   5  1299  17
+1  102    0   7  54  39  12  50     2  31
+2  100  236  23  48  27  10  40   944  30
+3  115  346  22  52  20   7  11  1138  36
+4  121  374  24  63  40  19  33  1899  35
+           X0    X1  X2   X3  X4   X5  X6     X7  X8
+20869998  134  7401  24   79  58   30  47  37046  43
+20869999  141  2124  24  151  69  162  20  59943  33
+20870000  134    83  24   95  62   37  20  26847  19
+20870001   80    17  16   30  19    2  33    858   9
+20870002  129  3536  24   72  40   18  33  14244  43
+           X0    X1  X2   X3  X4   X5  X6     X7  X8
+20869998  134  7401  24   79  58   30  47  37046  43
+20869999  141  2124  24  151  69  162  20  59943  33
+20870000  134    83  24   95  62   37  20  26847  19
+20870001   80    17  16   30  19    2  33    858   9
+20870002  129  3536  24   72  40   18  33  14244  43
+(62080001, 2)
+(20870003, 2)
+   nextClick  nextClick_shift
+0      73092               11
+1      17533            73092
+2        656            17533
+3       2149              656
+4       1517             2149
+   nextClick  nextClick_shift
+0      73092               11
+1      17533            73092
+2        656            17533
+3       2149              656
+4       1517             2149
+           nextClick  nextClick_shift
+20869998         513            55885
+20869999         590              513
+20870000         935              590
+20870001  1489760397              935
+20870002           6       1489760397
+           nextClick  nextClick_shift
+20869998         513            55885
+20869999         590              513
+20870000         935              590
+20870001  1489760397              935
+20870002           6       1489760397
+(62080001, 7)
+(20870003, 7)
+   ip_tcount  ip_tchan_count  ip_app_count  ip_app_os_count  ip_app_os_var  \
+0         18       30.346464            86                3       1.000000   
+1         23        0.000000           357               75      34.301983   
+2        107       39.025642           195               41      38.469513   
+3        106       24.722221            79               28      31.739418   
+4         29       31.132008          1168              233      43.542252   
+
+   ip_app_channel_var_day  ip_app_channel_mean_hour  
+0                1.200000                  8.422222  
+1                0.245156                  8.973913  
+2                1.209360                  9.310345  
+3                1.656605                 10.341772  
+4                1.644011                  5.851562  
+   ip_tcount  ip_tchan_count  ip_app_count  ip_app_os_count  ip_app_os_var  \
+0         18       30.346464            86                3       1.000000   
+1         23        0.000000           357               75      34.301983   
+2        107       39.025642           195               41      38.469513   
+3        106       24.722221            79               28      31.739418   
+4         29       31.132008          1168              233      43.542252   
+
+   ip_app_channel_var_day  ip_app_channel_mean_hour  
+0                1.200000                  8.422222  
+1                0.245156                  8.973913  
+2                1.209360                  9.310345  
+3                1.656605                 10.341772  
+4                1.644011                  5.851562  
+          ip_tcount  ip_tchan_count  ip_app_count  ip_app_os_count  \
+20869998        722       39.785332          5652             1369   
+20869999        873       40.576790          6526              253   
+20870000        761       31.959663          3216               10   
+20870001         40       15.564102           127                7   
+20870002        104      999.000000          2150              510   
+
+          ip_app_os_var  ip_app_channel_var_day  ip_app_channel_mean_hour  
+20869998      34.970737                0.259630                 12.617318  
+20869999      44.829536                1.404081                 10.016629  
+20870000       4.455555                1.350326                 10.864779  
+20870001      25.142857                0.000000                  9.250000  
+20870002      37.983009              999.000000                 15.000000  
+          ip_tcount  ip_tchan_count  ip_app_count  ip_app_os_count  \
+20869998        722       39.785332          5652             1369   
+20869999        873       40.576790          6526              253   
+20870000        761       31.959663          3216               10   
+20870001         40       15.564102           127                7   
+20870002        104      999.000000          2150              510   
+
+          ip_app_os_var  ip_app_channel_var_day  ip_app_channel_mean_hour  
+20869998      34.970737                0.259630                 12.617318  
+20869999      44.829536                1.404081                 10.016629  
+20870000       4.455555                1.350326                 10.864779  
+20870001      25.142857                0.000000                  9.250000  
+20870002      37.983009              999.000000                 15.000000  
+[301.0063989162445] Finished Loading Features, start concatenate
+(62080001, 20)
+(20870003, 20)
+   click_sec_lead_app  click_sec_lag_app   X0   X1  X2  X3  X4  X5  X6    X7  \
+0                -1.0               -1.0  110   10  23  45  16   9   5  1299   
+1             17533.0               -1.0  102    0   7  54  39  12  50     2   
+2               656.0              466.0  100  236  23  48  27  10  40   944   
+3              2149.0             3192.0  115  346  22  52  20   7  11  1138   
+4              1517.0             2349.0  121  374  24  63  40  19  33  1899   
+
+   X8  nextClick  nextClick_shift  ip_tcount  ip_tchan_count  ip_app_count  \
+0  17      73092               11         18       30.346464            86   
+1  31      17533            73092         23        0.000000           357   
+2  30        656            17533        107       39.025642           195   
+3  36       2149              656        106       24.722221            79   
+4  35       1517             2149         29       31.132008          1168   
+
+   ip_app_os_count  ip_app_os_var  ip_app_channel_var_day  \
+0                3       1.000000                1.200000   
+1               75      34.301983                0.245156   
+2               41      38.469513                1.209360   
+3               28      31.739418                1.656605   
+4              233      43.542252                1.644011   
+
+   ip_app_channel_mean_hour  
+0                  8.422222  
+1                  8.973913  
+2                  9.310345  
+3                 10.341772  
+4                  5.851562  
+   click_sec_lead_app  click_sec_lag_app   X0   X1  X2  X3  X4  X5  X6    X7  \
+0                -1.0               -1.0  110   10  23  45  16   9   5  1299   
+1             17533.0               -1.0  102    0   7  54  39  12  50     2   
+2               656.0              466.0  100  236  23  48  27  10  40   944   
+3              2149.0             3192.0  115  346  22  52  20   7  11  1138   
+4              1517.0             2349.0  121  374  24  63  40  19  33  1899   
+
+   X8  nextClick  nextClick_shift  ip_tcount  ip_tchan_count  ip_app_count  \
+0  17      73092               11         18       30.346464            86   
+1  31      17533            73092         23        0.000000           357   
+2  30        656            17533        107       39.025642           195   
+3  36       2149              656        106       24.722221            79   
+4  35       1517             2149         29       31.132008          1168   
+
+   ip_app_os_count  ip_app_os_var  ip_app_channel_var_day  \
+0                3       1.000000                1.200000   
+1               75      34.301983                0.245156   
+2               41      38.469513                1.209360   
+3               28      31.739418                1.656605   
+4              233      43.542252                1.644011   
+
+   ip_app_channel_mean_hour  
+0                  8.422222  
+1                  8.973913  
+2                  9.310345  
+3                 10.341772  
+4                  5.851562  
+          click_sec_lead_app  click_sec_lag_app   X0    X1  X2   X3  X4   X5  \
+20869998                 513              424.0  134  7401  24   79  58   30   
+20869999                 590              850.0  141  2124  24  151  69  162   
+20870000                 935            86464.0  134    83  24   95  62   37   
+20870001                  -1            19145.0   80    17  16   30  19    2   
+20870002                   6              864.0  129  3536  24   72  40   18   
+
+          X6     X7  X8   nextClick  nextClick_shift  ip_tcount  \
+20869998  47  37046  43         513            55885        722   
+20869999  20  59943  33         590              513        873   
+20870000  20  26847  19         935              590        761   
+20870001  33    858   9  1489760397              935         40   
+20870002  33  14244  43           6       1489760397        104   
+
+          ip_tchan_count  ip_app_count  ip_app_os_count  ip_app_os_var  \
+20869998       39.785332          5652             1369      34.970737   
+20869999       40.576790          6526              253      44.829536   
+20870000       31.959663          3216               10       4.455555   
+20870001       15.564102           127                7      25.142857   
+20870002      999.000000          2150              510      37.983009   
+
+          ip_app_channel_var_day  ip_app_channel_mean_hour  
+20869998                0.259630                 12.617318  
+20869999                1.404081                 10.016629  
+20870000                1.350326                 10.864779  
+20870001                0.000000                  9.250000  
+20870002              999.000000                 15.000000  
+          click_sec_lead_app  click_sec_lag_app   X0    X1  X2   X3  X4   X5  \
+20869998                 513              424.0  134  7401  24   79  58   30   
+20869999                 590              850.0  141  2124  24  151  69  162   
+20870000                 935            86464.0  134    83  24   95  62   37   
+20870001                  -1            19145.0   80    17  16   30  19    2   
+20870002                   6              864.0  129  3536  24   72  40   18   
+
+          X6     X7  X8   nextClick  nextClick_shift  ip_tcount  \
+20869998  47  37046  43         513            55885        722   
+20869999  20  59943  33         590              513        873   
+20870000  20  26847  19         935              590        761   
+20870001  33    858   9  1489760397              935         40   
+20870002  33  14244  43           6       1489760397        104   
+
+          ip_tchan_count  ip_app_count  ip_app_os_count  ip_app_os_var  \
+20869998       39.785332          5652             1369      34.970737   
+20869999       40.576790          6526              253      44.829536   
+20870000       31.959663          3216               10       4.455555   
+20870001       15.564102           127                7      25.142857   
+20870002      999.000000          2150              510      37.983009   
+
+          ip_app_channel_var_day  ip_app_channel_mean_hour  
+20869998                0.259630                 12.617318  
+20869999                1.404081                 10.016629  
+20870000                1.350326                 10.864779  
+20870001                0.000000                  9.250000  
+20870002              999.000000                 15.000000  
+(62080001, 7)
+(20870003, 7)
+(62080001, 35)
+(20870003, 35)
+   click_sec_lead_app  click_sec_lag_app   X0   X1  X2  X3  X4  X5  X6    X7  \
+0                  -1                 -1  110   10  23  45  16   9   5  1299   
+1               17533                 -1  102    0   7  54  39  12  50     2   
+2                 656                466  100  236  23  48  27  10  40   944   
+3                2149               3192  115  346  22  52  20   7  11  1138   
+4                1517               2349  121  374  24  63  40  19  33  1899   
+
+            ...            click_sec_lag_chl  click_sec_lead_os  \
+0           ...                         14.0               16.0   
+1           ...                         -1.0                0.0   
+2           ...                        466.0                5.0   
+3           ...                       3192.0                6.0   
+4           ...                       2349.0                0.0   
+
+   click_sec_lag_os  click_sec_lead_shift2  lu1  lu2  lu3  RN1N2  \
+0               6.0                   -1.0  110  121   45   2064   
+1              -1.0                31355.0  102  121   54   2939   
+2               0.0                  730.0  100  121   48   2084   
+3               8.0                 2515.0  115  121   52   2048   
+4               0.0                 4954.0  121  121   63   3067   
+
+   click_split_lead_ipos  click_split_lead_ipapp  
+0                1596480               999900000  
+1                  60840               238626330  
+2                 540870                65642080  
+3                 652080               214958170  
+4                   2540               151719600  
+
+[5 rows x 35 columns]
+   click_sec_lead_app  click_sec_lag_app   X0   X1  X2  X3  X4  X5  X6    X7  \
+0                  -1                 -1  110   10  23  45  16   9   5  1299   
+1               17533                 -1  102    0   7  54  39  12  50     2   
+2                 656                466  100  236  23  48  27  10  40   944   
+3                2149               3192  115  346  22  52  20   7  11  1138   
+4                1517               2349  121  374  24  63  40  19  33  1899   
+
+            ...            click_sec_lag_chl  click_sec_lead_os  \
+0           ...                         14.0               16.0   
+1           ...                         -1.0                0.0   
+2           ...                        466.0                5.0   
+3           ...                       3192.0                6.0   
+4           ...                       2349.0                0.0   
+
+   click_sec_lag_os  click_sec_lead_shift2  lu1  lu2  lu3  RN1N2  \
+0               6.0                   -1.0  110  121   45   2064   
+1              -1.0                31355.0  102  121   54   2939   
+2               0.0                  730.0  100  121   48   2084   
+3               8.0                 2515.0  115  121   52   2048   
+4               0.0                 4954.0  121  121   63   3067   
+
+   click_split_lead_ipos  click_split_lead_ipapp  
+0                1596480               999900000  
+1                  60840               238626330  
+2                 540870                65642080  
+3                 652080               214958170  
+4                   2540               151719600  
+
+[5 rows x 35 columns]
+          click_sec_lead_app  click_sec_lag_app   X0    X1  X2   X3  X4   X5  \
+20869998                 513                424  134  7401  24   79  58   30   
+20869999                 590                850  141  2124  24  151  69  162   
+20870000                 935              18000  134    83  24   95  62   37   
+20870001                  -1              18000   80    17  16   30  19    2   
+20870002                   6                864  129  3536  24   72  40   18   
+
+          X6     X7           ...            click_sec_lag_chl  \
+20869998  47  18000           ...                        362.0   
+20869999  20  18000           ...                        850.0   
+20870000  20  18000           ...                      86881.0   
+20870001  33    858           ...                         -1.0   
+20870002  33  14244           ...                         -1.0   
+
+          click_sec_lead_os  click_sec_lag_os  click_sec_lead_shift2  lu1  \
+20869998                281                10                    664  134   
+20869999                216               318                   1485  141   
+20870000                 26                28                     -1  134   
+20870001                  2             15160                     -1   80   
+20870002                  0               690                     -1  129   
+
+          lu2  lu3  RN1N2  click_split_lead_ipos  click_split_lead_ipapp  
+20869998  148   79   2343               28089600                  368350  
+20869999  148  151   1869               21639570                 2371110  
+20870000  148   95   1869                2665530                 3039900  
+20870001  148   30   2751                 246260               159597360  
+20870002  148   72   2751                  81510                  614990  
+
+[5 rows x 35 columns]
+          click_sec_lead_app  click_sec_lag_app   X0    X1  X2   X3  X4   X5  \
+20869998                 513                424  134  7401  24   79  58   30   
+20869999                 590                850  141  2124  24  151  69  162   
+20870000                 935              18000  134    83  24   95  62   37   
+20870001                  -1              18000   80    17  16   30  19    2   
+20870002                   6                864  129  3536  24   72  40   18   
+
+          X6     X7           ...            click_sec_lag_chl  \
+20869998  47  18000           ...                        362.0   
+20869999  20  18000           ...                        850.0   
+20870000  20  18000           ...                      86881.0   
+20870001  33    858           ...                         -1.0   
+20870002  33  14244           ...                         -1.0   
+
+          click_sec_lead_os  click_sec_lag_os  click_sec_lead_shift2  lu1  \
+20869998                281                10                    664  134   
+20869999                216               318                   1485  141   
+20870000                 26                28                     -1  134   
+20870001                  2             15160                     -1   80   
+20870002                  0               690                     -1  129   
+
+          lu2  lu3  RN1N2  click_split_lead_ipos  click_split_lead_ipapp  
+20869998  148   79   2343               28089600                  368350  
+20869999  148  151   1869               21639570                 2371110  
+20870000  148   95   1869                2665530                 3039900  
+20870001  148   30   2751                 246260               159597360  
+20870002  148   72   2751                  81510                  614990  
+
+[5 rows x 35 columns]
+[337.9687225818634] Concat Train/Test
+(62080001, 51)
+(20870003, 51)
+Index(['ip', 'app', 'device', 'os', 'channel', 'click_time', 'is_attributed',
+       'click_sec_lead_app', 'click_sec_lag_app', 'X0', 'X1', 'X2', 'X3', 'X4',
+       'X5', 'X6', 'X7', 'X8', 'nextClick', 'nextClick_shift', 'ip_tcount',
+       'ip_tchan_count', 'ip_app_count', 'ip_app_os_count', 'ip_app_os_var',
+       'ip_app_channel_var_day', 'ip_app_channel_mean_hour',
+       'click_sec_lead_split_sec', 'click_sec_lead_split_sec_ip_only',
+       'cumsum10', 'cumsum50', 'click_sec_lead_chl', 'click_sec_lag_chl',
+       'click_sec_lead_os', 'click_sec_lag_os', 'click_sec_lead_shift2', 'lu1',
+       'lu2', 'lu3', 'RN1N2', 'click_split_lead_ipos',
+       'click_split_lead_ipapp', 'same_next_app', 'same_prev_app',
+       'same_next_chl', 'same_prev_chl', 'qty', 'prevday_qty', 'prevhour_qty',
+       'count_in_next_hr', 'count_in_next_ten_mins'],
+      dtype='object')
+Index(['ip', 'app', 'device', 'os', 'channel', 'click_time', 'is_attributed',
+       'click_sec_lead_app', 'click_sec_lag_app', 'X0', 'X1', 'X2', 'X3', 'X4',
+       'X5', 'X6', 'X7', 'X8', 'nextClick', 'nextClick_shift', 'ip_tcount',
+       'ip_tchan_count', 'ip_app_count', 'ip_app_os_count', 'ip_app_os_var',
+       'ip_app_channel_var_day', 'ip_app_channel_mean_hour',
+       'click_sec_lead_split_sec', 'click_sec_lead_split_sec_ip_only',
+       'cumsum10', 'cumsum50', 'click_sec_lead_chl', 'click_sec_lag_chl',
+       'click_sec_lead_os', 'click_sec_lag_os', 'click_sec_lead_shift2', 'lu1',
+       'lu2', 'lu3', 'RN1N2', 'click_split_lead_ipos',
+       'click_split_lead_ipapp', 'same_next_app', 'same_prev_app',
+       'same_next_chl', 'same_prev_chl', 'qty', 'prevday_qty', 'prevhour_qty',
+       'count_in_next_hr', 'count_in_next_ten_mins'],
+      dtype='object')
+[371.2674014568329] Time prep
+[419.67616987228394] Add entropy
+[458.3232617378235] Split data
+Device 3032 shape : 0
+[487.8118598461151] Get common train and test
+Get common to train and test : app
+explore/lgb_cts_1804A.py:278: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+  train_df[col][~train_df[col].isin(keep)] = np.nan
+Length remaining for app : 376
+Get common to train and test : channel
+Length remaining for channel : 175
+Get common to train and test : os
+Length remaining for os : 299
+Get common to train and test : hour
+Length remaining for hour : 9
+Get common to train and test : device
+Length remaining for device : 1324
+[609.7891190052032] Data split complete
+train size:  62080001
+valid size:  0
+test size :  20870003
+**************************************************
+['X3', 'click_sec_lead_shift2', 'ip_click_hr_entropy', 'X1', 'ip_click_min_entropy', 'os', 'click_split_lead_ipapp', 'click_sec_lead_os', 'click_sec_lag_chl', 'qty', 'nextClick_shift', 'count_in_next_hr', 'ip_channel_entropy', 'X0', 'device', 'click_sec_lead_chl', 'X6', 'count_in_next_ten_mins', 'X2', 'ip', 'X5', 'click_sec_lead_app', 'click_split_lead_ipos', 'prevhour_qty', 'app', 'click_sec_lag_os', 'channel', 'nextClick', 'hour', 'click_sec_lead_split_sec', 'click_sec_lag_app', 'click_sec_lead_split_sec_ip_only', 'ip_device_entropy', 'X4', 'ip_app_entropy', 'X8', 'cumsum50', 'X7', 'prevday_qty', 'cumsum10', 'ip_os_entropy']
+**************************************************
+['app', 'device', 'os', 'channel', 'hour']
+**************************************************
+[609.8016409873962] Drop features complete
+train size:  62080001
+valid size:  20870003
+test size :  20870003
+[609.8017263412476] Training...
+preparing validation datasets
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/lightgbm/basic.py:1036: UserWarning: Using categorical_feature in Dataset.
+  warnings.warn('Using categorical_feature in Dataset.')
+[LightGBM] [Info] Number of positive: 150942, number of negative: 61929059
+[LightGBM] [Info] Total Bins 8196
+[LightGBM] [Info] Number of data: 62080001, number of used features: 41
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/lightgbm/basic.py:681: UserWarning: categorical_feature in param dict is overrided.
+  warnings.warn('categorical_feature in param dict is overrided.')
+Training until validation scores don't improve for 100 rounds.
+[10]	train's auc: 0.971359	valid's auc: 0.964482
+[20]	train's auc: 0.974409	valid's auc: 0.967592
+[30]	train's auc: 0.97569	valid's auc: 0.969345
+[40]	train's auc: 0.977106	valid's auc: 0.971026
+[50]	train's auc: 0.978432	valid's auc: 0.972848
+[60]	train's auc: 0.979498	valid's auc: 0.974029
+[70]	train's auc: 0.98059	valid's auc: 0.975487
+[80]	train's auc: 0.981312	valid's auc: 0.976479
+[90]	train's auc: 0.982207	valid's auc: 0.97772
+[100]	train's auc: 0.982785	valid's auc: 0.978451
+[110]	train's auc: 0.983252	valid's auc: 0.978998
+[120]	train's auc: 0.983762	valid's auc: 0.979576
+[130]	train's auc: 0.984256	valid's auc: 0.980076
+[140]	train's auc: 0.984602	valid's auc: 0.980412
+[150]	train's auc: 0.984943	valid's auc: 0.980726
+[160]	train's auc: 0.985206	valid's auc: 0.980992
+[170]	train's auc: 0.985419	valid's auc: 0.981185
+[180]	train's auc: 0.985652	valid's auc: 0.981428
+[190]	train's auc: 0.98583	valid's auc: 0.981629
+[200]	train's auc: 0.985989	valid's auc: 0.981747
+[210]	train's auc: 0.986137	valid's auc: 0.981879
+[220]	train's auc: 0.986259	valid's auc: 0.982016
+[230]	train's auc: 0.986415	valid's auc: 0.982131
+[240]	train's auc: 0.986542	valid's auc: 0.982222
+[250]	train's auc: 0.986646	valid's auc: 0.982306
+[260]	train's auc: 0.986731	valid's auc: 0.9824
+[270]	train's auc: 0.986836	valid's auc: 0.982482
+[280]	train's auc: 0.986956	valid's auc: 0.982549
+[290]	train's auc: 0.987063	valid's auc: 0.982606
+[300]	train's auc: 0.987129	valid's auc: 0.982661
+[310]	train's auc: 0.987221	valid's auc: 0.98271
+[320]	train's auc: 0.987308	valid's auc: 0.982767
+[330]	train's auc: 0.987377	valid's auc: 0.98281
+[340]	train's auc: 0.987448	valid's auc: 0.982861
+[350]	train's auc: 0.987521	valid's auc: 0.982887
+[360]	train's auc: 0.987595	valid's auc: 0.98292
+[370]	train's auc: 0.987665	valid's auc: 0.982962
+[380]	train's auc: 0.987732	valid's auc: 0.982992
+[390]	train's auc: 0.987809	valid's auc: 0.98303
+[400]	train's auc: 0.987877	valid's auc: 0.98306
+[410]	train's auc: 0.987929	valid's auc: 0.983084
+[420]	train's auc: 0.987981	valid's auc: 0.983108
+[430]	train's auc: 0.98803	valid's auc: 0.983129
+[440]	train's auc: 0.988094	valid's auc: 0.983145
+[450]	train's auc: 0.988138	valid's auc: 0.983158
+[460]	train's auc: 0.988187	valid's auc: 0.98317
+[470]	train's auc: 0.988246	valid's auc: 0.983186
+[480]	train's auc: 0.988307	valid's auc: 0.983211
+[490]	train's auc: 0.98836	valid's auc: 0.983239
+[500]	train's auc: 0.988411	valid's auc: 0.983258
+[510]	train's auc: 0.98845	valid's auc: 0.983277
+[520]	train's auc: 0.988492	valid's auc: 0.983297
+[530]	train's auc: 0.988537	valid's auc: 0.983302
+[540]	train's auc: 0.988571	valid's auc: 0.98332
+[550]	train's auc: 0.988604	valid's auc: 0.983328
+[560]	train's auc: 0.988645	valid's auc: 0.983339
+[570]	train's auc: 0.988689	valid's auc: 0.983348
+[580]	train's auc: 0.988729	valid's auc: 0.983365
+[590]	train's auc: 0.988768	valid's auc: 0.983367
+[600]	train's auc: 0.988807	valid's auc: 0.983379
+[610]	train's auc: 0.988849	valid's auc: 0.983399
+[620]	train's auc: 0.98888	valid's auc: 0.983413
+[630]	train's auc: 0.988915	valid's auc: 0.983418
+[640]	train's auc: 0.988954	valid's auc: 0.983426
+[650]	train's auc: 0.988994	valid's auc: 0.983434
+[660]	train's auc: 0.989031	valid's auc: 0.983444
+[670]	train's auc: 0.989059	valid's auc: 0.983446
+[680]	train's auc: 0.989096	valid's auc: 0.983449
+[690]	train's auc: 0.989132	valid's auc: 0.983459
+[700]	train's auc: 0.989163	valid's auc: 0.983466
+[710]	train's auc: 0.989197	valid's auc: 0.983469
+[720]	train's auc: 0.989232	valid's auc: 0.98347
+[730]	train's auc: 0.98926	valid's auc: 0.983473
+[740]	train's auc: 0.989287	valid's auc: 0.983483
+[750]	train's auc: 0.989322	valid's auc: 0.983492
+[760]	train's auc: 0.989351	valid's auc: 0.983493
+[770]	train's auc: 0.989396	valid's auc: 0.9835
+[780]	train's auc: 0.98942	valid's auc: 0.983501
+[790]	train's auc: 0.989458	valid's auc: 0.9835
+[800]	train's auc: 0.989491	valid's auc: 0.983493
+[810]	train's auc: 0.989526	valid's auc: 0.983502
+[820]	train's auc: 0.989567	valid's auc: 0.983499
+[830]	train's auc: 0.989602	valid's auc: 0.983506
+[840]	train's auc: 0.989641	valid's auc: 0.983514
+[850]	train's auc: 0.989662	valid's auc: 0.983442
+[860]	train's auc: 0.989694	valid's auc: 0.983446
+[870]	train's auc: 0.989728	valid's auc: 0.983449
+[880]	train's auc: 0.989756	valid's auc: 0.983456
+[890]	train's auc: 0.989795	valid's auc: 0.983458
+[900]	train's auc: 0.989827	valid's auc: 0.983453
+[910]	train's auc: 0.989854	valid's auc: 0.983444
+[920]	train's auc: 0.989878	valid's auc: 0.983447
+[930]	train's auc: 0.989913	valid's auc: 0.983447
+Early stopping, best iteration is:
+[837]	train's auc: 0.989622	valid's auc: 0.983517
+
+Model Report
+n_estimators :  837
+auc: 0.9835174458620317
+                                feat   imp
+0                            channel  2141
+1                                app  1546
+2                                 os  1316
+3           click_sec_lead_split_sec   506
+4                               hour   310
+5                      ip_os_entropy   298
+6                                qty   296
+7                                 X8   269
+8                          nextClick   269
+9                                 X3   266
+10                 ip_device_entropy   261
+11                                X0   254
+12                                X4   219
+13                                X1   204
+14              ip_click_min_entropy   195
+15               ip_click_hr_entropy   191
+16                ip_channel_entropy   190
+17                click_sec_lead_app   175
+18             click_sec_lead_shift2   174
+19                                X5   171
+20                                ip   170
+21            click_split_lead_ipapp   159
+22             click_split_lead_ipos   158
+23                    ip_app_entropy   154
+24                 click_sec_lag_app   154
+25            count_in_next_ten_mins   147
+26                  count_in_next_hr   145
+27                                X6   143
+28                            device   139
+29                       prevday_qty   124
+30  click_sec_lead_split_sec_ip_only   117
+31                 click_sec_lag_chl   114
+32                      prevhour_qty   113
+33                click_sec_lead_chl   109
+34                          cumsum10    97
+35                                X7    95
+36                 click_sec_lead_os    90
+37                  click_sec_lag_os    88
+38                                X2    57
+39                          cumsum50    52
+40                   nextClick_shift    42
+Auc for all hours in testval : 0.9835174458620316
+Auc for select hours in testval : 0.9674174205925844
+writing...

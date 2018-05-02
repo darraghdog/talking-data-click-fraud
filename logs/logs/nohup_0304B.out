@@ -1,0 +1,24 @@
+nohup: ignoring input
+/home/ubuntu/anaconda3/lib/python3.6/site-packages/sklearn/cross_validation.py:41: DeprecationWarning: This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module will be removed in 0.20.
+  "This module will be removed in 0.20.", DeprecationWarning)
+[7.3909759521484375e-06] Load Train
+Traceback (most recent call last):
+  File "explore/lgb_cts_0304B.py", line 106, in <module>
+    train_df = pd.read_csv(path+"train%s.csv"%(add_), dtype=dtypes, usecols=['ip','app','device','os', 'channel', 'click_time', 'is_attributed'])
+  File "/home/ubuntu/anaconda3/lib/python3.6/site-packages/pandas/io/parsers.py", line 655, in parser_f
+    return _read(filepath_or_buffer, kwds)
+  File "/home/ubuntu/anaconda3/lib/python3.6/site-packages/pandas/io/parsers.py", line 411, in _read
+    data = parser.read(nrows)
+  File "/home/ubuntu/anaconda3/lib/python3.6/site-packages/pandas/io/parsers.py", line 1005, in read
+    ret = self._engine.read(nrows)
+  File "/home/ubuntu/anaconda3/lib/python3.6/site-packages/pandas/io/parsers.py", line 1748, in read
+    data = self._reader.read(nrows)
+  File "pandas/_libs/parsers.pyx", line 890, in pandas._libs.parsers.TextReader.read (pandas/_libs/parsers.c:10862)
+  File "pandas/_libs/parsers.pyx", line 912, in pandas._libs.parsers.TextReader._read_low_memory (pandas/_libs/parsers.c:11138)
+  File "pandas/_libs/parsers.pyx", line 989, in pandas._libs.parsers.TextReader._read_rows (pandas/_libs/parsers.c:12175)
+  File "pandas/_libs/parsers.pyx", line 1117, in pandas._libs.parsers.TextReader._convert_column_data (pandas/_libs/parsers.c:14136)
+  File "pandas/_libs/parsers.pyx", line 1147, in pandas._libs.parsers.TextReader._convert_tokens (pandas/_libs/parsers.c:14658)
+  File "pandas/_libs/parsers.pyx", line 1208, in pandas._libs.parsers.TextReader._convert_with_dtype (pandas/_libs/parsers.c:15629)
+  File "/home/ubuntu/anaconda3/lib/python3.6/site-packages/pandas/core/dtypes/common.py", line 740, in is_integer_dtype
+    def is_integer_dtype(arr_or_dtype):
+KeyboardInterrupt
