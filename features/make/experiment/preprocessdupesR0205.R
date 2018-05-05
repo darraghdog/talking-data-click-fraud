@@ -81,3 +81,23 @@ fname = "sub_lgb0205_nodupe.csv.gz"
 write.csv(sub, 
           gzfile(paste0(path, '../sub/', fname)), 
           row.names = F, quote = F)
+
+sublgn = fread(paste0(path, "../sub/sub_lgb0205.csv"))
+sublg = fread(paste0(path, "../sub/sub_lgb2404.csv"))
+subnn = fread(paste0(path, "../sub/sub_nnet2104.csv"))
+sublg[removeDupeIdalltst==1, is_attributed := 0]
+sublgn[removeDupeIdalltst==1, is_attributed := 0]
+subnn[removeDupeIdalltst==1, is_attributed := 0]
+cor(rnkr(sublgn$is_attributed), rnkr(sublg$is_attributed))
+cor(rnkr(subnn$is_attributed), rnkr(sublg$is_attributed))
+cor(rnkr(subnn$is_attributed), rnkr(sublgn$is_attributed))
+
+
+rnkr = function(vec){
+  dt = data.table(vec)
+  dt[, idx := 1:.N]
+  dt = dt[order(vec)]
+  dt[, rank := (1:.N)/.N]
+  rank = dt[order(idx)]$rank
+  return(rank)
+}

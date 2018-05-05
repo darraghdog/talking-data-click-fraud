@@ -1,16 +1,16 @@
-# dupeseqtrn
-gunzip dupeseqtrn.gz
-sed -n 1,1p dupeseqtrn > dupeseqtrnval
-sed -n 60000000,122080000p dupeseqtrn >> dupeseqtrnval
-sed -n 1,1p dupeseqtrn > dupeseqtstval
-sed -n 144710000,152400000p dupeseqtrn >> dupeseqtstval
-sed -n 162000000,168300000p dupeseqtrn >> dupeseqtstval
-sed -n 175000000,181880000p dupeseqtrn >> dupeseqtstval
-gzip dupeseqtrn
-gzip dupeseqtrnval
-gzip dupeseqtstval
 
 
+# not_seen_prev_trn
+gunzip not_seen_prev_trn.gz
+sed -n 1,1p not_seen_prev_trn > not_seen_prev_trnval
+sed -n 60000000,122080000p not_seen_prev_trn >> not_seen_prev_trnval
+sed -n 1,1p not_seen_prev_trn > not_seen_prev_tstval
+sed -n 144710000,152400000p not_seen_prev_trn >> not_seen_prev_tstval
+sed -n 162000000,168300000p not_seen_prev_trn >> not_seen_prev_tstval
+sed -n 175000000,181880000p not_seen_prev_trn >> not_seen_prev_tstval
+gzip not_seen_prev_trn
+gzip not_seen_prev_trnval
+gzip not_seen_prev_tstval
 
 ## count_same_in_next_trn
 #gunzip count_same_in_next_trn.gz
