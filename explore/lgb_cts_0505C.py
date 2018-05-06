@@ -87,7 +87,7 @@ ctdtypes = {
         'ip_app_channel_mean_hour'  : np.float32
         }
 
-validation = True
+validation = False
 save_df    = False
 load_df    = False
 if validation:
@@ -97,7 +97,7 @@ if validation:
     test_usecols = ['ip','app','device','os', 'channel', 'click_time', 'is_attributed']
     val_size = 0
 else:
-    ntrees = 1500
+    ntrees = 941
     val_size = 10000
     early_stop = ntrees
     add_ = ''
